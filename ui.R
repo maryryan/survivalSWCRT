@@ -119,13 +119,15 @@ shinyUI(fluidPage(
             #                value=0.1,
             #                step=0.01)
             # ),
-            # baseline hazard #
+          
+          # baseline hazard #
             radioButtons("constant_baseline",
                          "Baseline hazard:",
                          c("Constant"="constant",
-                           "Change by constant over time"="change")),
+                           "Change by constant over time"="change_t")
+                         ),
             conditionalPanel(
-              conditon="input.constant_baseline == 'change'",
+              condition="input.constant_baseline == 'change_t'",
               numericInput("baseline_change",
                            "Baseline hazard change constant:",
                            min=-99999,
@@ -149,6 +151,7 @@ shinyUI(fluidPage(
             numericInput(inputId="sig",
                          label="Significance level",
                          0.05, min=0.000001, max=1, step=0.001)
+          
         ),
 
         # Show a plot of the generated distribution
@@ -159,6 +162,7 @@ shinyUI(fluidPage(
                   tags$li( textOutput("text_smScore") ),
                   tags$li( textOutput("text_tangScore") )
                 ),
+                textOutput("text_ICCs"),
                 
                 style="font-size:20px" ),
           

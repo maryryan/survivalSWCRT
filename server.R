@@ -927,5 +927,27 @@ shinyServer(function(input, output,session) {
     
     
   })
+  
+  output$text_ICCs <- renderText({
+    Cp <- 1
+    beta0 <- 0
+    
+    if(constant_baseline() == "constant"){
+      lambda0 <- 1+0*seq(0,(J()-1))
+    }else{
+      lambda0 <- 1+baseline_change()*seq(0,(J()-1))
+    }
+    
+    k <- rep( seq(2,J()), (n()/(J()-1)) )
+    pi_b <- c(0, rep((1/(J()-1)), (J()-1)))
+    
+    # wald stuff #
+    design_varA <- sandwich_var(n=n(),m=m(),J=J(),
+                                lambda0=lambda0,tau=Cp, pi_b=pi_b,
+                                tau_kw=tau_w(), tau_kb=tau_b(), beta=betaA())
+    
+    # output results #
+    paste0("The within-period generalized ICC is estimated to be ", round(design_varA$icc_w,2), " and the between-period generalized ICC is estimated to be ", round(design_varA$icc_b, 2),".")
+  })
 
 })
