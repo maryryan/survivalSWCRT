@@ -788,18 +788,8 @@ shinyServer(function(input, output,session) {
   
   alpha <- reactive({input$sig})
   
-  ## Render text first ##
-  output$text_context <- renderText({
-    if(n_power()=="power"){
-      
-      paste0("The predicted power of a SW-CRT with J=", J(), " periods, n = ", n(), " clusters, and m = ", m(), " participants per cluster-period is:")
-    
-      }else{
-        paste0("For a SW-CRT to obtain at least ", power()*100,"% power with J=", J(), " periods and m = ", m(), " participants per cluster-period, the study would need:")
-    }
-    
-  })
-  output$text_t <- renderText({
+  ## reactive variance functions ##
+  design_varA <- reactive({
     Cp <- 1
     beta0 <- 0
     
@@ -813,35 +803,12 @@ shinyServer(function(input, output,session) {
     pi_b <- c(0, rep((1/(J()-1)), (J()-1)))
     
     # wald stuff #
-    design_varA <- sandwich_var(n=n(),m=m(),J=J(),
+    sandwich_var(n=n(),m=m(),J=J(),
                                 lambda0=lambda0,tau=Cp, pi_b=pi_b,
                                 tau_kw=tau_w(), tau_kb=tau_b(), beta=betaA())
-    if(n_power()=="power"){
-      
-      # calculate predicted power based on your sandwich variance and t test #
-      design_power_t <- pt((abs(betaA())/design_varA$se_beta - qt((1-alpha()/2), n()-1)), n()-1)
-      
-      # output results #
-      paste0(round(design_power_t*100, 2), "% under the Wald t-testing paradigm,")
-      
-    }else{
-      
-      # calculate number of clusters under given power #
-      t_typeI <- qt((1-alpha()/2), n()-1)
-      t_power <- qt(power(), n()-1)
-      
-      n_result <- ( design_varA$se_beta * (t_typeI + t_power)^2 )/betaA()^2
-      
-      # output results #
-      paste0("n=", ceiling(n_result), " clusters under the Wald t-testing paradigm,")
-      
-      
-    }
-    
-    
   })
   
-  output$text_smScore <- renderText({
+  design_varA_score <- reactive({
     Cp <- 1
     beta0 <- 0
     
@@ -854,35 +821,12 @@ shinyServer(function(input, output,session) {
     k <- rep( seq(2,J()), (n()/(J()-1)) )
     pi_b <- c(0, rep((1/(J()-1)), (J()-1)))
     
-    design_varA_score <- sandwich_var_score(n=n(),m=m(),J=J(),
-                                            lambda0=lambda0,tau=Cp, pi_b=pi_b,
-                                            tau_kw=tau_w(), tau_kb=tau_b(),
-                                            beta0=beta0,betaA=betaA())
-    if(n_power()=="power"){
-      
-    # calculate predicted power based on score test #
-    score_power_predict_A <-  pnorm(abs(design_varA_score$score)/(design_varA_score$B/sqrt(n())) - qnorm(1-alpha()/2))
-    
-    # output results #
-    paste0(round(score_power_predict_A*100,2), "% under the Self and Mauritsen robust score testing paradigm, and")
-    
-    }else{
-      
-      # calculate number of clusters under given power #
-      z_typeI <- qnorm(1-alpha()/2)
-      z_power <- qnorm(power())
-      
-      n_result <- ( design_varA_score$B/sqrt(n()) * (z_typeI + z_power)^2 )/abs(design_varA_score$score)^2
-      
-      # output results #
-      paste0("n=", ceiling(n_result), " clusters under the Self and Mauritsen robust score testing paradigm, and")
-      
-      
-    }
-    
+    sandwich_var_score(n=n(),m=m(),J=J(),lambda0=lambda0,tau=Cp, pi_b=pi_b,
+                       tau_kw=tau_w(), tau_kb=tau_b(),
+                       beta0=beta0,betaA=betaA())
   })
   
-  output$text_tangScore <- renderText({
+  design_var0_score <- reactive({
     Cp <- 1
     beta0 <- 0
     
@@ -896,18 +840,81 @@ shinyServer(function(input, output,session) {
     pi_b <- c(0, rep((1/(J()-1)), (J()-1)))
     
     # score stuff #
-    design_var0_score <- sandwich_var_score(n=n(),m=m(),J=J(),
-                                            lambda0=lambda0,tau=Cp, pi_b=pi_b,
-                                            tau_kw=tau_w(), tau_kb=tau_b(),
-                                            beta0=beta0, betaA=beta0)
-    design_varA_score <- sandwich_var_score(n=n(),m=m(),J=J(),
-                                            lambda0=lambda0,tau=Cp, pi_b=pi_b,
-                                            tau_kw=tau_w(), tau_kb=tau_b(),
-                                            beta0=beta0,betaA=betaA())
+    sandwich_var_score(n=n(),m=m(),J=J(),lambda0=lambda0,tau=Cp, pi_b=pi_b,
+                       tau_kw=tau_w(), tau_kb=tau_b(),
+                       beta0=beta0, betaA=beta0)
+  })
+  
+  ## Render text first ##
+  output$text_context <- renderText({
+    if(n_power()=="power"){
+      
+      paste0("The predicted power of a SW-CRT with J=", J(), " periods, n = ", n(), " clusters, and m = ", m(), " participants per cluster-period is:")
+    
+      }else{
+        paste0("For a SW-CRT to obtain at least ", power()*100,"% power with J=", J(), " periods and m = ", m(), " participants per cluster-period, the study would need:")
+    }
+    
+  })
+  output$text_t <- renderText({
+    
+    if(n_power()=="power"){
+      
+      # calculate predicted power based on your sandwich variance and t test #
+      design_power_t <- pt((abs(betaA())/design_varA()$se_beta - qt((1-alpha()/2), n()-1)), n()-1)
+      
+      # output results #
+      paste0(round(design_power_t*100, 2), "% under the Wald t-testing paradigm,")
+      
+    }else{
+      
+      # calculate number of clusters under given power #
+      t_typeI <- qt((1-alpha()/2), n()-1)
+      t_power <- qt(power(), n()-1)
+      
+      n_result <- ( design_varA()$se_beta * (t_typeI + t_power)^2 )/betaA()^2
+      
+      # output results #
+      paste0("n=", ceiling(n_result), " clusters under the Wald t-testing paradigm,")
+      
+      
+    }
+    
+    
+  })
+  
+  output$text_smScore <- renderText({
+    
+    if(n_power()=="power"){
+      
+    # calculate predicted power based on score test #
+    score_power_predict_A <-  pnorm(abs(design_varA_score()$score)/(design_varA_score()$B/sqrt(n())) - qnorm(1-alpha()/2))
+    
+    # output results #
+    paste0(round(score_power_predict_A*100,2), "% under the Self and Mauritsen robust score testing paradigm, and")
+    
+    }else{
+      
+      # calculate number of clusters under given power #
+      z_typeI <- qnorm(1-alpha()/2)
+      z_power <- qnorm(power())
+      
+      n_result <- ( design_varA_score()$B/sqrt(n()) * (z_typeI + z_power)^2 )/abs(design_varA_score()$score)^2
+      
+      # output results #
+      paste0("n=", ceiling(n_result), " clusters under the Self and Mauritsen robust score testing paradigm, and")
+      
+      
+    }
+    
+  })
+  
+  output$text_tangScore <- renderText({
+    
     if(n_power() == "power"){
       
       # calculate predicted power based on score test #
-      score_power_predict_tang <-  pnorm(abs(design_varA_score$score)/(design_varA_score$B/sqrt(n())) - qnorm(1-alpha()/2)*(design_var0_score$B/design_varA_score$B))
+      score_power_predict_tang <-  pnorm(abs(design_varA_score()$score)/(design_varA_score()$B/sqrt(n())) - qnorm(1-alpha()/2)*(design_var0_score()$B/design_varA_score()$B))
       
       # output results #
       paste0(round(score_power_predict_tang*100,2), "% under the Tang robust score testing paradigm.")
@@ -918,7 +925,7 @@ shinyServer(function(input, output,session) {
       z_typeI <- qnorm(1-alpha()/2)
       z_power <- qnorm(power())
       
-      n_result <- ( design_varA_score$B/sqrt(n()) * ((z_typeI + z_power)*(1/design_var0_score$B/design_varA_score$B))^2 )/abs(design_varA_score$score)^2
+      n_result <- ( design_varA_score()$B/sqrt(n()) * ((z_typeI + z_power)*(1/design_var0_score()$B/design_varA_score()$B))^2 )/abs(design_varA_score()$score)^2
       
       # output results #
       paste0("n=", ceiling(n_result), " clusters under the Tang robust score testing paradigm.")
@@ -929,25 +936,9 @@ shinyServer(function(input, output,session) {
   })
   
   output$text_ICCs <- renderText({
-    Cp <- 1
-    beta0 <- 0
-    
-    if(constant_baseline() == "constant"){
-      lambda0 <- 1+0*seq(0,(J()-1))
-    }else{
-      lambda0 <- 1+baseline_change()*seq(0,(J()-1))
-    }
-    
-    k <- rep( seq(2,J()), (n()/(J()-1)) )
-    pi_b <- c(0, rep((1/(J()-1)), (J()-1)))
-    
-    # wald stuff #
-    design_varA <- sandwich_var(n=n(),m=m(),J=J(),
-                                lambda0=lambda0,tau=Cp, pi_b=pi_b,
-                                tau_kw=tau_w(), tau_kb=tau_b(), beta=betaA())
     
     # output results #
-    paste0("The within-period generalized ICC is estimated to be ", round(design_varA$icc_w,2), " and the between-period generalized ICC is estimated to be ", round(design_varA$icc_b, 2),".")
+    paste0("The within-period generalized ICC is estimated to be ", round(design_varA()$icc_w,2), " and the between-period generalized ICC is estimated to be ", round(design_varA()$icc_b, 2),".")
   })
 
 })
