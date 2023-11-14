@@ -178,7 +178,9 @@ shinyUI(fluidPage(
       # sig level #
       numericInput(inputId="sig",
                    label="Significance level",
-                   0.05, min=0.000001, max=1, step=0.001)
+                   0.05, min=0.000001, max=1, step=0.001),
+      
+      actionButton("submit", "Update View", icon("refresh"))
       
     ),
     

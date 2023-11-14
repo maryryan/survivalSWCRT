@@ -784,6 +784,8 @@ shinyServer(function(input, output,session) {
     reset('file1')
   })
   
+
+  ## PUT SOME eventReactive({}) IN HERE TO SUBMIT SOME OF THESE FUNCTIONS WHEN THE SUBMIT BUTTON IS CLICKED ##
   ## reacts ##
   n_power <- reactive({input$n_power})
   
@@ -794,7 +796,7 @@ shinyServer(function(input, output,session) {
   n_use <- reactive({
     if(balanced() == "balanced"){
       
-     input$n
+      input$n
       
     }else if(balanced() == "upload"){
       
@@ -875,8 +877,8 @@ shinyServer(function(input, output,session) {
     
     # wald stuff #
     sandwich_var(n=n_use(),m=m(),J=J_use(),
-                                lambda0=lambda0,tau=Cp, desmat_prob=desmat_prob(),#pi_b=pi_b,
-                                tau_kw=tau_w(), tau_kb=tau_b(), beta=betaA())
+                 lambda0=lambda0,tau=Cp, desmat_prob=desmat_prob(),#pi_b=pi_b,
+                 tau_kw=tau_w(), tau_kb=tau_b(), beta=betaA())
   })
   
   
@@ -941,10 +943,13 @@ shinyServer(function(input, output,session) {
     }else{
       
       # calculate number of clusters under given power #
-      t_typeI <- qt((1-alpha()/2), n_use()-1)
-      t_power <- qt(power(), n_use()-1)
+      z_typeI <- qnorm(1-alpha()/2)
+      z_power <- qnorm(power())
+      #t_typeI <- qt((1-alpha()/2), n_use()-1)
+      #t_power <- qt(power(), n_use()-1)
       
-      n_result <- ( design_varA()$se_beta * (t_typeI + t_power)^2 )/betaA()^2
+      # need to multiply se_beta by n_use bc the sandwich_var() output automatically divides it by n
+      n_result <- ( design_varA()$se_beta*n_use() * (z_typeI + z_power)^2 )/betaA()^2
       
       # output results #
       paste0("n=", ceiling(n_result), " clusters under the Wald t-testing paradigm,")
@@ -971,7 +976,8 @@ shinyServer(function(input, output,session) {
       z_typeI <- qnorm(1-alpha()/2)
       z_power <- qnorm(power())
       
-      n_result <- ( design_varA_score()$B/sqrt(n_use()) * (z_typeI + z_power)^2 )/abs(design_varA_score()$score)^2
+      # no need to do anything with n_use here bc score and B are output without that division
+      n_result <- ( design_varA_score()$B * (z_typeI + z_power)^2 )/abs(design_varA_score()$score)^2#/sqrt(n_use()) * (z_typeI + z_power)^2 )/abs(design_varA_score()$score)^2
       
       # output results #
       paste0("n=", ceiling(n_result), " clusters under the Self and Mauritsen robust score testing paradigm, and")
@@ -997,7 +1003,8 @@ shinyServer(function(input, output,session) {
       z_typeI <- qnorm(1-alpha()/2)
       z_power <- qnorm(power())
       
-      n_result <- ( design_varA_score()$B/sqrt(n_use()) * ((z_typeI + z_power)*(1/design_var0_score()$B/design_varA_score()$B))^2 )/abs(design_varA_score()$score)^2
+      # still need to figure out what's happening here
+      n_result <- ( design_varA_score()$B * ((z_typeI + z_power)*(1/design_var0_score()$B/design_varA_score()$B))^2 )/abs(design_varA_score()$score)^2#/sqrt(n_use()) * ((z_typeI + z_power)*(1/design_var0_score()$B/design_varA_score()$B))^2 )/abs(design_varA_score()$score)^2
       
       # output results #
       paste0("n=", ceiling(n_result), " clusters under the Tang robust score testing paradigm.")
