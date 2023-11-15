@@ -63,12 +63,6 @@ shinyUI(fluidPage(
         
         conditionalPanel(
           condition = "input.balanced == 'balanced'",
-          # time periods #
-          numericInput("J",
-                       "Number of time periods:",
-                       min = 3,
-                       max = 50,
-                       value = 3),
           # clusters #
           numericInput("n",
                        "Number of clusters:",
@@ -78,9 +72,16 @@ shinyUI(fluidPage(
         ) #end balanced conditional
       ), #end power conditional
       
+      # cluster size #
+      numericInput("m",
+                   "Cluster-period size:",
+                   min=2,
+                   max=100000,
+                   value=2),
+      
+      # time periods #
       conditionalPanel(
-        condition = "input.n_power == 'n'",
-        # time periods #
+        condition = "input.balanced == 'balanced' | input.n_power == 'n'",
         numericInput("J",
                      "Number of time periods:",
                      min = 3,
@@ -88,12 +89,6 @@ shinyUI(fluidPage(
                      value = 3)
       ),
       
-      # cluster size #
-      numericInput("m",
-                   "Cluster-period size:",
-                   min=2,
-                   max=100000,
-                   value=2),
       conditionalPanel(
         condition="input.n_power == 'n'",
         # clusters #
@@ -180,7 +175,7 @@ shinyUI(fluidPage(
                    label="Significance level",
                    0.05, min=0.000001, max=1, step=0.001),
       
-      actionButton("submit", "Update View", icon("refresh"))
+      actionButton("submit", "Update View")
       
     ),
     
@@ -198,9 +193,14 @@ shinyUI(fluidPage(
                         
                         style="font-size:20px" )
                   ),
-      tabPanel("Design Matrix",#br(),
-               tableOutput("design_matrix")
-               )
+        
+        #conditionalPanel(
+         # condition = "input.n_power == 'power'",
+          tabPanel("Design Matrix",#br(),
+                   tableOutput("design_matrix")
+        #)
+      )
+        
     )#end tablesetPanel
   )#end mainPanel
   )#end sibebar layout

@@ -335,7 +335,7 @@ shinyServer(function(input, output,session) {
     return(H2)
   }
   
-  sandwich_var <- function(n,m,J, lambda0,tau,desmat_prob, tau_kw, tau_kb, beta=beta){
+  sandwich_var <- function(m,J, lambda0,tau,desmat_prob, tau_kw, tau_kb, beta=beta){
     H0_sum <- H2_sum <- rep(0, J)
     #H_score_sum <- rep(NA,J)
     H1_sum_eq <- H1_sum_uneq <- H0_sum_iccb <- matrix(NA, nrow=J, ncol=J)
@@ -374,21 +374,29 @@ shinyServer(function(input, output,session) {
     #score <- m*sum(H_score_sum)
     #score2 <- m*sum(H_score_sum^2)
     
-    return(list(se_beta=sqrt(var_beta)/sqrt(n), se_naive=sqrt(solve(A))/sqrt(n),
-                B=sqrt(B), B_mod=sqrt(B*((n-1)/n)), #score=score,
+    return(list(var_beta_sqrt=sqrt(var_beta), var_naive=sqrt(solve(A)),#/sqrt(n),
+                B=sqrt(B), #B_mod=sqrt(B*((n-1)/n)), #score=score,
                 #score2=sqrt(score2), score2_mod=sqrt(score2*((n-1)/n)),
-                A=sqrt(A)/sqrt(n),
-                icc_w=icc_w, icc_b=icc_b,
-                se_beta_iccs=sqrt(var_beta_iccs)/sqrt(n)))
+                A=sqrt(A),#/sqrt(n),
+                icc_w=icc_w, icc_b=icc_b#,
+                #se_beta_iccs=sqrt(var_beta_iccs)/sqrt(n)
+                ))
     
   }
   
   designMatrix <- function(design, periods=NULL, clusters=NULL, file=NULL){
     if(design == "balanced"){
+      sequences <- periods-1
       
-      W0 <- matrix(0, ncol=periods, nrow=clusters)
-      W0[upper.tri(W0)] <- 1
-      W0
+      if( clusters %% sequences != 0 ){
+        stop("Must have equal number of clusters per sequence for design to be balanaced")
+      }else{
+        
+        W0 <- matrix(0, ncol=periods, nrow=sequences)
+        W0[upper.tri(W0)] <- 1
+        W0[rep(1:nrow(W0), each = (clusters/sequences)),]
+      }
+      
       
     }else if(design == "upload"){
       read.csv(file$datapath, header=FALSE)
@@ -734,7 +742,7 @@ shinyServer(function(input, output,session) {
     return(H_score)
   }
   
-  sandwich_var_score <- function(n,m,J, lambda0,tau,desmat_prob, tau_kw, tau_kb, beta0=beta0, betaA=betaA){
+  sandwich_var_score <- function(m,J, lambda0,tau,desmat_prob, tau_kw, tau_kb, beta0=beta0, betaA=betaA){
     H0_sum <- H2_sum <- rep(0, J)
     H_score_sum <- rep(NA,J)
     H1_sum_eq <- H1_sum_uneq <- matrix(NA, nrow=J, ncol=J)
@@ -766,12 +774,14 @@ shinyServer(function(input, output,session) {
     score <- m*sum(H_score_sum)
     score2 <- m*sum(tcrossprod(H_score_sum))
     
-    score_var <- sqrt(A)/sqrt(n)
+    score_var <- sqrt(A)#/sqrt(n)
     
-    return(list(se_beta=sqrt(var_beta)/sqrt(n), se_naive=sqrt(solve(A))/sqrt(n),
-                B=sqrt(B), B_mod=sqrt(B*((n-1)/n)), score=score,
-                score2=sqrt(score2), score2_mod=sqrt(score2*((n-1)/n)),
-                A=score_var, A_mod=score_var*sqrt((n-1)/n)))
+    return(list(var_beta_sqrt=sqrt(var_beta), var_naive=sqrt(solve(A)),#/sqrt(n),
+                B=sqrt(B), #B_mod=sqrt(B*((n-1)/n)),
+                score=score,
+                score2=sqrt(score2), #score2_mod=sqrt(score2*((n-1)/n)),
+                A=score_var#, A_mod=score_var*sqrt((n-1)/n)
+                ))
     
   }
   
@@ -785,82 +795,121 @@ shinyServer(function(input, output,session) {
   })
   
 
-  ## PUT SOME eventReactive({}) IN HERE TO SUBMIT SOME OF THESE FUNCTIONS WHEN THE SUBMIT BUTTON IS CLICKED ##
   ## reacts ##
-  n_power <- reactive({input$n_power})
+  n_power <- eventReactive(input$submit, {
+    input$n_power
+    })
   
-  balanced <- reactive({input$balanced})
+  balanced <- eventReactive(input$submit, {
+    input$balanced
+    })
   
-  m <- reactive({input$m})
+  m <- eventReactive(input$submit, {
+    input$m
+    })
   
-  n_use <- reactive({
-    if(balanced() == "balanced"){
+  n_use <- eventReactive(input$submit, {
+    if( n_power() == "power" ){
       
-      input$n
-      
-    }else if(balanced() == "upload"){
-      
-      if(is.null(file1())) stop("User needs to upload design matrix before the function can continue")
-      desmat <- read.csv(file1()$datapath, header=FALSE)
-      
-      nrow(desmat)
-      
-    }
-  })
-  J_use <- reactive({
-    if(balanced() == "balanced"){
-      
-      input$J
-      
-    }else if(balanced() == "upload"){
-      
-      if(is.null(file1())) stop("User needs to upload design matrix before the function can continue")
-      desmat <- read.csv(file1()$datapath, header=FALSE)
-      
-      ncol(desmat)
-      
+      if(balanced() == "balanced"){
+        
+        input$n
+        
+      }else if(balanced() == "upload"){
+        
+        if(is.null(file1())) stop("User needs to upload design matrix before the function can continue")
+        desmat <- read.csv(file1()$datapath, header=FALSE)
+        
+        nrow(desmat)
+        
+      }
+    }else{
+      NULL
     }
     
   })
   
-  desmat <- reactive({
-    if(balanced() == "balanced"){
-      
-      designMatrix(design = balanced(), periods = J_use(), clusters = n_use())
-      
-    }else if(balanced() == "upload"){
-      
-      if(is.null(file1())) stop("User needs to upload design matrix before the function can continue")
-      desmat <- read.csv(file1()$datapath, header=FALSE)
-      desmat
-      
+  J_use <- eventReactive(input$submit, {
+    if( n_power() == "power"){
+      if(balanced() == "balanced"){
+        
+        input$J
+        
+      }else if(balanced() == "upload"){
+        
+        if(is.null(file1())) stop("User needs to upload design matrix before the function can continue")
+        desmat <- read.csv(file1()$datapath, header=FALSE)
+        
+        ncol(desmat)
+        
+      } 
+    }else{
+      input$J
     }
+    
+  })
+  
+  desmat <- eventReactive(input$submit, {
+    if( is.null(n_use()) == FALSE){
+      if(balanced() == "balanced"){
+        
+        designMatrix(design = balanced(), periods = J_use(), clusters = n_use())
+        
+      }else if(balanced() == "upload"){
+        
+        if(is.null(file1())) stop("User needs to upload design matrix before the function can continue")
+        desmat <- read.csv(file1()$datapath, header=FALSE)
+        desmat
+        
+      }
+    }else{
+      NULL
+    }
+  
   })
   
   desmat_prob <- reactive({
-    desmat()/n_use()
+    if(n_power() == "n"){
+      W0 <- matrix( 0, ncol=J_use(), nrow=(J_use()-1) )
+      W0[upper.tri(W0)] <- 1
+      W0*(1/(J_use()-1))
+      #c(0, rep((1/(J_use()-1)), (J_use()-1)))
+      
+    }else{
+      desmat()/n_use() 
+    }
   })
   
-  power <- reactive({input$power})
+  power <- eventReactive(input$submit, {
+    input$power
+    })
   
-  tau_w <- reactive({input$tau_w})
-  tau_b <- reactive({input$tau_b})
+  tau_w <- reactive({#eventReactive(input$submit, {
+    input$tau_w
+    })
+  tau_b <- reactive({#eventReactive(input$submit, {
+    input$tau_b
+    })
   
   #icc_w <- reactive({input$icc_w})
   #icc_b <- reactive({input$icc_b})
   
   # cv.c <- 0; cv.p <- 0
   
-  betaA <- reactive({input$beta})
+  betaA <- eventReactive(input$submit, {input$beta})
   # pa <- reactive({input$admin_censor})
   # p0 <- reactive({input$other_censor})
-  constant_baseline <- reactive({input$constant_baseline})
-  baseline_change <- reactive({input$baseline_change})
+  constant_baseline <- reactive({#eventReactive(input$submit, {
+    input$constant_baseline
+    })
+  baseline_change <- reactive({#eventReactive(input$submit, {
+    input$baseline_change
+    })
   
-  alpha <- reactive({input$sig})
+  alpha <- eventReactive(input$submit, {input$sig})
   
   ## reactive variance functions ##
-  design_varA <- reactive({
+  design_varA <- eventReactive(input$submit, {
     Cp <- 1
     beta0 <- 0
     
@@ -876,13 +925,14 @@ shinyServer(function(input, output,session) {
     
     
     # wald stuff #
-    sandwich_var(n=n_use(),m=m(),J=J_use(),
+    sandwich_var(#n=n_use(),
+                 m=m(),J=J_use(),
                  lambda0=lambda0,tau=Cp, desmat_prob=desmat_prob(),#pi_b=pi_b,
                  tau_kw=tau_w(), tau_kb=tau_b(), beta=betaA())
   })
   
   
-  design_varA_score <- reactive({
+  design_varA_score <- eventReactive(input$submit, {#reactive({
     Cp <- 1
     beta0 <- 0
     
@@ -895,12 +945,13 @@ shinyServer(function(input, output,session) {
     #k <- rep( seq(2,J()), (n()/(J()-1)) )
     #pi_b <- c(0, rep((1/(J()-1)), (J()-1)))
     
-    sandwich_var_score(n=n_use(),m=m(),J=J_use(),lambda0=lambda0,tau=Cp, desmat_prob=desmat_prob(),#pi_b=pi_b,
+    sandwich_var_score(#n=n_use(),
+                       m=m(),J=J_use(),lambda0=lambda0,tau=Cp, desmat_prob=desmat_prob(),#pi_b=pi_b,
                        tau_kw=tau_w(), tau_kb=tau_b(),
                        beta0=beta0,betaA=betaA())
   })
   
-  design_var0_score <- reactive({
+  design_var0_score <- eventReactive(input$submit, {#reactive({
     Cp <- 1
     beta0 <- 0
     
@@ -914,7 +965,8 @@ shinyServer(function(input, output,session) {
     #pi_b <- c(0, rep((1/(J()-1)), (J()-1)))
     
     # score stuff #
-    sandwich_var_score(n=n_use(),m=m(),J=J_use(),lambda0=lambda0,tau=Cp, desmat_prob=desmat_prob(),#pi_b=pi_b,
+    sandwich_var_score(#n=n_use(),
+                       m=m(),J=J_use(),lambda0=lambda0,tau=Cp, desmat_prob=desmat_prob(),#pi_b=pi_b,
                        tau_kw=tau_w(), tau_kb=tau_b(),
                        beta0=beta0, betaA=beta0)
   })
@@ -935,7 +987,7 @@ shinyServer(function(input, output,session) {
     if(n_power()=="power"){
       
       # calculate predicted power based on your sandwich variance and t test #
-      design_power_t <- pt((abs(betaA())/design_varA()$se_beta - qt((1-alpha()/2), n_use()-1)), n_use()-1)
+      design_power_t <- pt((abs(betaA())/(design_varA()$var_beta_sqrt/sqrt(n_use())) - qt((1-alpha()/2), n_use()-1)), n_use()-1)
       
       # output results #
       paste0(round(design_power_t*100, 2), "% under the Wald t-testing paradigm,")
@@ -948,11 +1000,10 @@ shinyServer(function(input, output,session) {
       #t_typeI <- qt((1-alpha()/2), n_use()-1)
       #t_power <- qt(power(), n_use()-1)
       
-      # need to multiply se_beta by n_use bc the sandwich_var() output automatically divides it by n
-      n_result <- ( design_varA()$se_beta*n_use() * (z_typeI + z_power)^2 )/betaA()^2
+      n_result <- ( design_varA()$var_beta_sqrt * (z_typeI + z_power) )^2/betaA()^2
       
       # output results #
-      paste0("n=", ceiling(n_result), " clusters under the Wald t-testing paradigm,")
+      paste0("n=", ceiling(n_result), " clusters under the Wald z-testing paradigm,")
       
       
     }
@@ -977,7 +1028,7 @@ shinyServer(function(input, output,session) {
       z_power <- qnorm(power())
       
       # no need to do anything with n_use here bc score and B are output without that division
-      n_result <- ( design_varA_score()$B * (z_typeI + z_power)^2 )/abs(design_varA_score()$score)^2#/sqrt(n_use()) * (z_typeI + z_power)^2 )/abs(design_varA_score()$score)^2
+      n_result <- ( design_varA_score()$B * (z_typeI + z_power) )^2/abs(design_varA_score()$score)^2#/sqrt(n_use()) * (z_typeI + z_power)^2 )/abs(design_varA_score()$score)^2
       
       # output results #
       paste0("n=", ceiling(n_result), " clusters under the Self and Mauritsen robust score testing paradigm, and")
@@ -1004,7 +1055,7 @@ shinyServer(function(input, output,session) {
       z_power <- qnorm(power())
       
       # still need to figure out what's happening here
-      n_result <- ( design_varA_score()$B * ((z_typeI + z_power)*(1/design_var0_score()$B/design_varA_score()$B))^2 )/abs(design_varA_score()$score)^2#/sqrt(n_use()) * ((z_typeI + z_power)*(1/design_var0_score()$B/design_varA_score()$B))^2 )/abs(design_varA_score()$score)^2
+      n_result <- ( design_varA_score()$B * (z_power + z_typeI*(design_var0_score()$B/design_varA_score()$B)) )^2/abs(design_varA_score()$score)^2#/sqrt(n_use()) * ((z_typeI + z_power)*(1/design_var0_score()$B/design_varA_score()$B))^2 )/abs(design_varA_score()$score)^2
       
       # output results #
       paste0("n=", ceiling(n_result), " clusters under the Tang robust score testing paradigm.")
@@ -1021,15 +1072,19 @@ shinyServer(function(input, output,session) {
   })
   
   output$design_matrix <- renderTable({
-    
-    if(balanced() == "balanced"){
-      desmat_display <- desmat()#designMatrix(design = balanced(), periods = J_use(), clusters = n())
-    }else if(balanced() == "upload"){
-      if(is.null(file1())) stop("User needs to upload design matrix before the function can continue")
-      desmat_display <- designMatrix(design = balanced(), file=file1())
+    if( n_power == "n"){
+      print("no")
+    }else{
+      if(balanced() == "balanced"){
+        desmat_display <- desmat()#designMatrix(design = balanced(), periods = J_use(), clusters = n())
+      }else if(balanced() == "upload"){
+        if(is.null(file1())) stop("User needs to upload design matrix before the function can continue")
+        desmat_display <- designMatrix(design = balanced(), file=file1())
+      }
+      
+      head(desmat_display, n=nrow(desmat_display))
     }
     
-    head(desmat_display, n=nrow(desmat_display))
     
   },digits=0)
   
