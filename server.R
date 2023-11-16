@@ -26,12 +26,12 @@ shinyServer(function(input, output,session) {
   observe(updateNumericInput(session, "tau_b", max = tau_w() - .Machine$double.eps,))
   
   #### FUNCTIONS ####
-  q_0 <- function(s, beta, z_ij, j,lambda0, tau,pi_b){
+  q_0 <- function(s, beta, z_ij, j,lambda0, tau,desmat_prob){#pi_b){
     # censoring distribution
     G_s <- 1-s/tau
     
     # W_js (ratio of s_1j/s_0j)
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     s_1j <- pi_b_j * exp(beta - exp(beta)*lambda0*s)
     s_0j <- pi_b_j * exp(beta - exp(beta)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
     W_js <- s_1j/s_0j
@@ -48,7 +48,7 @@ shinyServer(function(input, output,session) {
     return(q0)
   }
   
-  q_1 <- function(s, t, beta, z_ij, z_il, j,l,lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb){
+  q_1 <- function(s, t, beta, z_ij, z_il, j,l,lambda0_j, lambda0_l, tau, desmat_prob, tau_kw, tau_kb){
     
     # transform kendall's tau into correlation parameters
     theta_b <- 1-tau_kb
@@ -58,12 +58,12 @@ shinyServer(function(input, output,session) {
     G_st <- (1-s/tau)*(1-t/tau)
     
     # Ws
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     s_1js <- pi_b_j * exp(beta - exp(beta)*lambda0_j*s)
     s_0js <- pi_b_j * exp(beta - exp(beta)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
     W_js <- s_1js/s_0js
     
-    pi_b_l <- sum(pi_b[1:l])
+    pi_b_l <- sum(desmat_prob[,l])#sum(pi_b[1:l])
     s_1lt <- pi_b_l * exp(beta - exp(beta)*lambda0_l*t)
     s_0lt <- pi_b_l * exp(beta - exp(beta)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
     W_lt <- s_1lt/s_0lt
@@ -97,7 +97,7 @@ shinyServer(function(input, output,session) {
     
   }
   
-  q_2 <- function(s, t, beta, z_ij, z_il, j,l,lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb){
+  q_2 <- function(s, t, beta, z_ij, z_il, j,l,lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb){
     
     # transform kendall's tau into correlation parameters
     theta_b <- 1-tau_kb
@@ -107,12 +107,12 @@ shinyServer(function(input, output,session) {
     G_st <- (1-s/tau)*(1-t/tau)
     
     # Ws
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     s_1js <- pi_b_j * exp(beta - exp(beta)*lambda0_j*s)
     s_0js <- pi_b_j * exp(beta - exp(beta)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
     W_js <- s_1js/s_0js
     
-    pi_b_l <- sum(pi_b[1:l])
+    pi_b_l <- sum(desmat_prob[,l])#sum(pi_b[1:l])
     s_1lt <- pi_b_l * exp(beta - exp(beta)*lambda0_l*t)
     s_0lt <- pi_b_l * exp(beta - exp(beta)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
     W_lt <- s_1lt/s_0lt
@@ -150,7 +150,7 @@ shinyServer(function(input, output,session) {
     
   }
   
-  q_3 <- function(s, t, beta, z_ij, z_il, j ,l, lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb){
+  q_3 <- function(s, t, beta, z_ij, z_il, j ,l, lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb){
     
     # transform kendall's tau into correlation parameters
     theta_b <- 1-tau_kb
@@ -160,12 +160,12 @@ shinyServer(function(input, output,session) {
     G_st <- (1-s/tau)*(1-t/tau)
     
     # Ws
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     s_1js <- pi_b_j * exp(beta - exp(beta)*lambda0_j*s)
     s_0js <- pi_b_j * exp(beta - exp(beta)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
     W_js <- s_1js/s_0js
     
-    pi_b_l <- sum(pi_b[1:l])
+    pi_b_l <- sum(desmat_prob[,l])#sum(pi_b[1:l])
     s_1lt <- pi_b_l * exp(beta - exp(beta)*lambda0_l*t)
     s_0lt <- pi_b_l * exp(beta - exp(beta)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
     W_lt <- s_1lt/s_0lt
@@ -202,7 +202,7 @@ shinyServer(function(input, output,session) {
     
   } 
   
-  q_4 <- function(s,t, beta, z_ij, z_il, j, l, lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb){
+  q_4 <- function(s,t, beta, z_ij, z_il, j, l, lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb){
     # transform kendall's tau into correlation parameters
     theta_b <- 1-tau_kb
     theta_w <- 1-tau_kw
@@ -211,12 +211,12 @@ shinyServer(function(input, output,session) {
     G_st <- (1-s/tau)*(1-t/tau)
     
     # Ws
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     s_1js <- pi_b_j * exp(beta - exp(beta)*lambda0_j*s)
     s_0js <- pi_b_j * exp(beta - exp(beta)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
     W_js <- s_1js/s_0js
     
-    pi_b_l <- sum(pi_b[1:l])
+    pi_b_l <- sum(desmat_prob[,l])#sum(pi_b[1:l])
     s_1lt <- pi_b_l * exp(beta - exp(beta)*lambda0_l*t)
     s_0lt <- pi_b_l * exp(beta - exp(beta)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
     W_lt <- s_1lt/s_0lt
@@ -250,13 +250,13 @@ shinyServer(function(input, output,session) {
   }
   
   # for the bread A #
-  V_0 <- function(s, beta, z_ij, j, lambda0, tau, pi_b){
+  V_0 <- function(s, beta, z_ij, j, lambda0, tau, desmat_prob){#pi_b){
     
     # censoring distribution
     G_s <- 1-s/tau
     
     # W_js (ratio of s_1j/s_0j)
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     s_1j <- s_2j <- pi_b_j * exp(beta - exp(beta)*lambda0*s)
     s_0j <- pi_b_j * exp(beta - exp(beta)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
     #W_js <- s_1j/s_0j
@@ -273,50 +273,50 @@ shinyServer(function(input, output,session) {
   }
   
   
-  Q <- function(beta, z_ij, z_il, j, l, lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb){
+  Q <- function(beta, z_ij, z_il, j, l, lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb){
     # function that integrates and adds together the 4 q components for the non-same subject portion of B
-    Q <- dblquad(q_1,0, tau,0,tau,dim=2, beta=beta, z_ij=z_ij, z_il=z_il, j=j, l=l, lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,pi_b=pi_b, tau_kw=tau_kw, tau_kb=tau_kb) -
-      dblquad(q_2,0,tau,0,tau, dim=2, beta=beta, z_ij=z_ij, z_il=z_il, j=j, l=l,lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,pi_b=pi_b, tau_kw=tau_kw, tau_kb=tau_kb) -
-      dblquad(q_3,0,tau,0,tau,dim=2, beta=beta, z_ij=z_ij, z_il=z_il, j=j, l=l, lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,pi_b=pi_b, tau_kw=tau_kw, tau_kb=tau_kb) +
-      dblquad(q_4,0,tau,0,tau, dim=2, beta=beta, z_ij=z_ij, z_il=z_il, j=j, l=l,lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,pi_b=pi_b, tau_kw=tau_kw, tau_kb=tau_kb)
-    
+    Q <- dblquad(q_1,0, tau,0,tau,dim=2, beta=beta, z_ij=z_ij, z_il=z_il, j=j, l=l, lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,desmat_prob=desmat_prob, tau_kw=tau_kw, tau_kb=tau_kb) -
+      dblquad(q_2,0,tau,0,tau, dim=2, beta=beta, z_ij=z_ij, z_il=z_il, j=j, l=l,lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,desmat_prob=desmat_prob, tau_kw=tau_kw, tau_kb=tau_kb) -
+      dblquad(q_3,0,tau,0,tau,dim=2, beta=beta, z_ij=z_ij, z_il=z_il, j=j, l=l, lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,desmat_prob=desmat_prob, tau_kw=tau_kw, tau_kb=tau_kb) +
+      dblquad(q_4,0,tau,0,tau, dim=2, beta=beta, z_ij=z_ij, z_il=z_il, j=j, l=l,lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,desmat_prob=desmat_prob, tau_kw=tau_kw, tau_kb=tau_kb)
+
     return(Q)
   }
   
-  H0 <- function(j, beta, lambda0, tau,pi_b){
+  H0 <- function(j, beta, lambda0, tau,desmat_prob){#pi_b){
     # function that integrates and takes the expectation for the same subject, cluster, period portion of B
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     
-    H0 <- pi_b_j*pracma::integral(fun=q_0,xmin=0,xmax=tau,beta=beta, z_ij=1,j=j,lambda0=lambda0, tau=tau,pi_b=pi_b) +
-      (1-pi_b_j)*pracma::integral(fun=q_0,xmin=0,xmax=tau, beta=beta, z_ij=0,j=j,lambda0=lambda0, tau=tau,pi_b=pi_b)
+    H0 <- pi_b_j*pracma::integral(fun=q_0,xmin=0,xmax=tau,beta=beta, z_ij=1,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob) +#pi_b=pi_b) +
+      (1-pi_b_j)*pracma::integral(fun=q_0,xmin=0,xmax=tau, beta=beta, z_ij=0,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob)#pi_b=pi_b)
     
     return(H0)
   }
   
-  H1 <- function(j, l, beta, lambda0_j, lambda0_l, tau,pi_b,tau_kw, tau_kb){
+  H1 <- function(j, l, beta, lambda0_j, lambda0_l, tau,desmat_prob,tau_kw, tau_kb){
     # function that takes the expectation and adds together the integrated q components for the non-same subject portion of B
-    pi_b_min <- ifelse( j < l, sum(pi_b[1:j]), sum(pi_b[1:l]) )
-    pi_b_max <- ifelse( j > l, sum(pi_b[1:j]), sum(pi_b[1:l]) )
+    pi_b_min <- ifelse( j < l, sum(desmat_prob[,j]), sum(desmat_prob[,l]) )#ifelse( j < l, sum(pi_b[1:j]), sum(pi_b[1:l]) )
+    pi_b_max <- ifelse( j > l, sum(desmat_prob[,j]), sum(desmat_prob[,l]) )#ifelse( j > l, sum(pi_b[1:j]), sum(pi_b[1:l]) )
     if( j > l){
-      pi_b_mid <- sum(pi_b[(l+1):j])
-    }else if(j < l){
-      pi_b_mid <- sum(pi_b[(j+1):l]) 
+      pi_b_mid <- sum(desmat_prob[,j]) - sum(desmat_prob[,l])#sum(pi_b[(l+1):j])
+    }else if(j < l){ 
+      pi_b_mid <- sum(desmat_prob[,l]) - sum(desmat_prob[,j])#sum(pi_b[(j+1):l]) 
     }else if(j == l){
       pi_b_mid <- 0
     }
     
-    H1 <-  (1-pi_b_max)*Q(beta, 0,0,j,l,lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb)
+    H1 <-  (1-pi_b_max)*Q(beta, 0,0,j,l,lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb)
     
     if(j > 1 | l > 1){
       
       if(j > l){
-        H1 <- H1 + pi_b_mid*Q(beta, 1,0,j,l,lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb)
+        H1 <- H1 + pi_b_mid*Q(beta, 1,0,j,l,lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb)
       }else if(j < l){
-        H1 <- H1 + pi_b_mid*Q(beta, 0,1,j,l,lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb)
+        H1 <- H1 + pi_b_mid*Q(beta, 0,1,j,l,lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb)
       }
       
       if(j > 1 & l > 1){
-        H1 <- H1 + pi_b_min*Q(beta, 1,1,j,l,lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb)
+        H1 <- H1 + pi_b_min*Q(beta, 1,1,j,l,lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb)
       }
     }
     
@@ -324,31 +324,31 @@ shinyServer(function(input, output,session) {
   }
   
   # bread of the sandwich
-  H2 <- function(j, beta, lambda0, tau, pi_b){
+  H2 <- function(j, beta, lambda0, tau, desmat_prob){#pi_b){
     # function that integrates and takes the expectation of the A components
     
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     
-    H2 <- pi_b_j*pracma::integral(fun=V_0, xmin=0, xmax=tau, beta=beta, z_ij=1, j=j, lambda0=lambda0, tau=tau, pi_b=pi_b) + 
-      (1-pi_b_j)*pracma::integral(fun=V_0, xmin=0, xmax=tau, beta=beta, z_ij=0, j=j, lambda0=lambda0, tau=tau, pi_b=pi_b)
+    H2 <- pi_b_j*pracma::integral(fun=V_0, xmin=0, xmax=tau, beta=beta, z_ij=1, j=j, lambda0=lambda0, tau=tau, desmat_prob=desmat_prob) +#pi_b=pi_b) + 
+      (1-pi_b_j)*pracma::integral(fun=V_0, xmin=0, xmax=tau, beta=beta, z_ij=0, j=j, lambda0=lambda0, tau=tau, desmat_prob=desmat_prob)#pi_b=pi_b)
     
     return(H2)
   }
   
-  sandwich_var <- function(n,m,J, lambda0,tau,pi_b, tau_kw, tau_kb, beta=beta){
+  sandwich_var <- function(m,J, lambda0,tau,desmat_prob, tau_kw, tau_kb, beta=beta){
     H0_sum <- H2_sum <- rep(0, J)
     #H_score_sum <- rep(NA,J)
     H1_sum_eq <- H1_sum_uneq <- H0_sum_iccb <- matrix(NA, nrow=J, ncol=J)
     for(j in seq(J)){
       
-      H0_sum[j] <- H0(j=j, beta=beta, lambda0=lambda0[j], tau=tau, pi_b=pi_b)
-      H2_sum[j] <- H2(j=j, beta=beta, lambda0=lambda0[j], tau=tau, pi_b=pi_b)
+      H0_sum[j] <- H0(j=j, beta=beta, lambda0=lambda0[j], tau=tau, desmat_prob=desmat_prob)#pi_b=pi_b)
+      H2_sum[j] <- H2(j=j, beta=beta, lambda0=lambda0[j], tau=tau, desmat_prob=desmat_prob)#pi_b=pi_b)
       #H_score_sum[j] <- H_score(j=j, beta=beta, lambda0=lambda0[j], tau=tau, pi_b=pi_b)
       for(l in seq(J)){
         if(j==l){
-          H1_sum_eq[j,l] <- H1(j=j,l=l, beta=beta, lambda0_j=lambda0[j], lambda0_l=lambda0[l], tau=tau, pi_b=pi_b, tau_kw=tau_kw, tau_kb=tau_kb)
+          H1_sum_eq[j,l] <- H1(j=j,l=l, beta=beta, lambda0_j=lambda0[j], lambda0_l=lambda0[l], tau=tau, desmat_prob=desmat_prob, tau_kw=tau_kw, tau_kb=tau_kb)
         }else{
-          H1_sum_uneq[j,l] <- H1(j=j,l=l, beta=beta, lambda0_j=lambda0[j], lambda0_l=lambda0[l], tau=tau, pi_b=pi_b, tau_kw=tau_kw, tau_kb=tau_kb)
+          H1_sum_uneq[j,l] <- H1(j=j,l=l, beta=beta, lambda0_j=lambda0[j], lambda0_l=lambda0[l], tau=tau, desmat_prob=desmat_prob, tau_kw=tau_kw, tau_kb=tau_kb)
           H0_sum_iccb[j,l] <-  H0_sum[j]*H0_sum[l]
         }
         
@@ -374,23 +374,43 @@ shinyServer(function(input, output,session) {
     #score <- m*sum(H_score_sum)
     #score2 <- m*sum(H_score_sum^2)
     
-    return(list(se_beta=sqrt(var_beta)/sqrt(n), se_naive=sqrt(solve(A))/sqrt(n),
-                B=sqrt(B), B_mod=sqrt(B*((n-1)/n)), #score=score,
+    return(list(var_beta_sqrt=sqrt(var_beta), var_naive=sqrt(solve(A)),#/sqrt(n),
+                B=sqrt(B), #B_mod=sqrt(B*((n-1)/n)), #score=score,
                 #score2=sqrt(score2), score2_mod=sqrt(score2*((n-1)/n)),
-                A=sqrt(A)/sqrt(n),
-                icc_w=icc_w, icc_b=icc_b,
-                se_beta_iccs=sqrt(var_beta_iccs)/sqrt(n)))
+                A=sqrt(A),#/sqrt(n),
+                icc_w=icc_w, icc_b=icc_b#,
+                #se_beta_iccs=sqrt(var_beta_iccs)/sqrt(n)
+                ))
     
+  }
+  
+  designMatrix <- function(design, periods=NULL, clusters=NULL, file=NULL){
+    if(design == "balanced"){
+      sequences <- periods-1
+      
+      if( clusters %% sequences != 0 ){
+        stop("Must have equal number of clusters per sequence for design to be balanaced")
+      }else{
+        
+        W0 <- matrix(0, ncol=periods, nrow=sequences)
+        W0[upper.tri(W0)] <- 1
+        W0[rep(1:nrow(W0), each = (clusters/sequences)),]
+      }
+      
+      
+    }else if(design == "unbalanced"){
+      read.csv(file$datapath, header=FALSE)
+    }
   }
   
   
   #### score functions ####
-  q_0_score <- function(s, beta0, betaA, z_ij, j,lambda0, tau,pi_b){
+  q_0_score <- function(s, beta0, betaA, z_ij, j,lambda0, tau,desmat_prob){#pi_b){
     # censoring distribution
     G_s <- 1-s/tau
     
     # W_js (ratio of s_1j/s_0j)
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     s_1j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s)
     s_0j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
     W_js <- s_1j/s_0j
@@ -407,7 +427,7 @@ shinyServer(function(input, output,session) {
     return(q0)
   }
   
-  q_1_score <- function(s, t, beta0, betaA, z_ij, z_il, j,l,lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb){
+  q_1_score <- function(s, t, beta0, betaA, z_ij, z_il, j,l,lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb){
     
     # transform kendall's tau into correlation parameters
     theta_b <- 1-tau_kb
@@ -417,12 +437,12 @@ shinyServer(function(input, output,session) {
     G_st <- (1-s/tau)*(1-t/tau)
     
     # Ws
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     s_1js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s)
     s_0js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
     W_js <- s_1js/s_0js
     
-    pi_b_l <- sum(pi_b[1:l])
+    pi_b_l <- sum(desmat_prob[,l])#sum(pi_b[1:l])
     s_1lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t)
     s_0lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
     W_lt <- s_1lt/s_0lt
@@ -456,7 +476,7 @@ shinyServer(function(input, output,session) {
     
   }
   
-  q_2_score <- function(s, t, beta0, betaA, z_ij, z_il, j,l,lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb){
+  q_2_score <- function(s, t, beta0, betaA, z_ij, z_il, j,l,lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb){
     
     # transform kendall's tau into correlation parameters
     theta_b <- 1-tau_kb
@@ -466,12 +486,12 @@ shinyServer(function(input, output,session) {
     G_st <- (1-s/tau)*(1-t/tau)
     
     # Ws
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     s_1js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s)
     s_0js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
     W_js <- s_1js/s_0js
     
-    pi_b_l <- sum(pi_b[1:l])
+    pi_b_l <- sum(desmat_prob[,l])#sum(pi_b[1:l])
     s_1lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t)
     s_0lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
     W_lt <- s_1lt/s_0lt
@@ -509,7 +529,7 @@ shinyServer(function(input, output,session) {
     
   }
   
-  q_3_score <- function(s, t, beta0, betaA, z_ij, z_il, j ,l, lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb){
+  q_3_score <- function(s, t, beta0, betaA, z_ij, z_il, j ,l, lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb){
     
     # transform kendall's tau into correlation parameters
     theta_b <- 1-tau_kb
@@ -519,12 +539,12 @@ shinyServer(function(input, output,session) {
     G_st <- (1-s/tau)*(1-t/tau)
     
     # Ws
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     s_1js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s)
     s_0js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
     W_js <- s_1js/s_0js
     
-    pi_b_l <- sum(pi_b[1:l])
+    pi_b_l <- sum(desmat_prob[,l])#sum(pi_b[1:l])
     s_1lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t)
     s_0lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
     W_lt <- s_1lt/s_0lt
@@ -561,7 +581,7 @@ shinyServer(function(input, output,session) {
     
   } 
   
-  q_4_score <- function(s,t, beta0, betaA, z_ij, z_il, j, l, lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb){
+  q_4_score <- function(s,t, beta0, betaA, z_ij, z_il, j, l, lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb){
     # transform kendall's tau into correlation parameters
     theta_b <- 1-tau_kb
     theta_w <- 1-tau_kw
@@ -570,12 +590,12 @@ shinyServer(function(input, output,session) {
     G_st <- (1-s/tau)*(1-t/tau)
     
     # Ws
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     s_1js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s)
     s_0js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
     W_js <- s_1js/s_0js
     
-    pi_b_l <- sum(pi_b[1:l])
+    pi_b_l <- sum(desmat_prob[,l])#sum(pi_b[1:l])
     s_1lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t)
     s_0lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
     W_lt <- s_1lt/s_0lt
@@ -608,13 +628,13 @@ shinyServer(function(input, output,session) {
     
   }
   
-  V_0_score <- function(s, beta0, betaA, z_ij, j, lambda0, tau, pi_b){
+  V_0_score <- function(s, beta0, betaA, z_ij, j, lambda0, tau, desmat_prob){#pi_b){
     
     # censoring distribution
     G_s <- 1-s/tau
     
     # W_js (ratio of s_1j/s_0j)
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     s_1j <- s_2j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s)
     s_0j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
     #W_js <- s_1j/s_0j
@@ -630,72 +650,72 @@ shinyServer(function(input, output,session) {
     
   }
   
-  Q_score <- function(beta0, betaA, z_ij, z_il, j, l, lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb){
+  Q_score <- function(beta0, betaA, z_ij, z_il, j, l, lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb){
     # function that integrates and adds together the 4 q components for the non-same subject portion of B
-    Q <- dblquad(q_1_score,0, tau,0,tau,dim=2, beta0=beta0, betaA=betaA, z_ij=z_ij, z_il=z_il, j=j, l=l, lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,pi_b=pi_b, tau_kw=tau_kw, tau_kb=tau_kb) -
-      dblquad(q_2_score,0,tau,0,tau, dim=2,beta0=beta0, betaA=betaA, z_ij=z_ij, z_il=z_il, j=j, l=l,lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,pi_b=pi_b, tau_kw=tau_kw, tau_kb=tau_kb) -
-      dblquad(q_3_score,0,tau,0,tau,dim=2, beta0=beta0, betaA=betaA, z_ij=z_ij, z_il=z_il, j=j, l=l, lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,pi_b=pi_b, tau_kw=tau_kw, tau_kb=tau_kb) +
-      dblquad(q_4_score,0,tau,0,tau, dim=2, beta0=beta0, betaA=betaA, z_ij=z_ij, z_il=z_il, j=j, l=l,lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,pi_b=pi_b, tau_kw=tau_kw, tau_kb=tau_kb)
+    Q <- dblquad(q_1_score,0, tau,0,tau,dim=2, beta0=beta0, betaA=betaA, z_ij=z_ij, z_il=z_il, j=j, l=l, lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,desmat_prob=desmat_prob, tau_kw=tau_kw, tau_kb=tau_kb) -
+      dblquad(q_2_score,0,tau,0,tau, dim=2,beta0=beta0, betaA=betaA, z_ij=z_ij, z_il=z_il, j=j, l=l,lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,desmat_prob=desmat_prob, tau_kw=tau_kw, tau_kb=tau_kb) -
+      dblquad(q_3_score,0,tau,0,tau,dim=2, beta0=beta0, betaA=betaA, z_ij=z_ij, z_il=z_il, j=j, l=l, lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,desmat_prob=desmat_prob, tau_kw=tau_kw, tau_kb=tau_kb) +
+      dblquad(q_4_score,0,tau,0,tau, dim=2, beta0=beta0, betaA=betaA, z_ij=z_ij, z_il=z_il, j=j, l=l,lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,desmat_prob=desmat_prob, tau_kw=tau_kw, tau_kb=tau_kb)
     
     return(Q)
   }
   
-  H0_score <- function(j, beta0, betaA, lambda0, tau,pi_b){
+  H0_score <- function(j, beta0, betaA, lambda0, tau,desmat_prob){#pi_b){
     # function that integrates and takes the expectation for the same subject, cluster, period portion of B
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     
-    H0 <- pi_b_j*pracma::integral(fun=q_0_score,xmin=0,xmax=tau,beta0=beta0, betaA=betaA, z_ij=1,j=j,lambda0=lambda0, tau=tau,pi_b=pi_b) +
-      (1-pi_b_j)*pracma::integral(fun=q_0_score,xmin=0,xmax=tau, beta0=beta0, betaA=betaA, z_ij=0,j=j,lambda0=lambda0, tau=tau,pi_b=pi_b)
+    H0 <- pi_b_j*pracma::integral(fun=q_0_score,xmin=0,xmax=tau,beta0=beta0, betaA=betaA, z_ij=1,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob) +#pi_b=pi_b) +
+      (1-pi_b_j)*pracma::integral(fun=q_0_score,xmin=0,xmax=tau, beta0=beta0, betaA=betaA, z_ij=0,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob)#pi_b=pi_b)
     
     return(H0)
   }
   
-  H1_score <- function(j, l, beta0, betaA, lambda0_j, lambda0_l, tau,pi_b,tau_kw, tau_kb){
+  H1_score <- function(j, l, beta0, betaA, lambda0_j, lambda0_l, tau,desmat_prob,tau_kw, tau_kb){
     # function that takes the expectation and adds together the integrated q components for the non-same subject portion of B
-    pi_b_min <- ifelse( j < l, sum(pi_b[1:j]), sum(pi_b[1:l]) )
-    pi_b_max <- ifelse( j > l, sum(pi_b[1:j]), sum(pi_b[1:l]) )
+    pi_b_min <- ifelse( j < l, sum(desmat_prob[,j]), sum(desmat_prob[,l]) )#ifelse( j < l, sum(pi_b[1:j]), sum(pi_b[1:l]) )
+    pi_b_max <- ifelse( j > l, sum(desmat_prob[,j]), sum(desmat_prob[,l]) )#ifelse( j > l, sum(pi_b[1:j]), sum(pi_b[1:l]) )
     if( j > l){
-      pi_b_mid <- sum(pi_b[(l+1):j])
+      pi_b_mid <- sum(desmat_prob[,j]) - sum(desmat_prob[,l])#sum(pi_b[(l+1):j])
     }else if(j < l){
-      pi_b_mid <- sum(pi_b[(j+1):l]) 
+      pi_b_mid <- sum(desmat_prob[,l]) - sum(desmat_prob[,j])#sum(pi_b[(j+1):l]) 
     }else if(j == l){
       pi_b_mid <- 0
     }
     
-    H1 <-  (1-pi_b_max)*Q_score(beta0=beta0, betaA=betaA, 0,0,j,l,lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb)
+    H1 <-  (1-pi_b_max)*Q_score(beta0=beta0, betaA=betaA, 0,0,j,l,lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb)
     
     if(j > 1 | l > 1){
       
       if(j > l){
-        H1 <- H1 + pi_b_mid*Q_score(beta0=beta0, betaA=betaA, 1,0,j,l,lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb)
+        H1 <- H1 + pi_b_mid*Q_score(beta0=beta0, betaA=betaA, 1,0,j,l,lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb)
       }else if(j < l){
-        H1 <- H1 + pi_b_mid*Q_score(beta0=beta0, betaA=betaA, 0,1,j,l,lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb)
+        H1 <- H1 + pi_b_mid*Q_score(beta0=beta0, betaA=betaA, 0,1,j,l,lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb)
       }
       
       if(j > 1 & l > 1){
-        H1 <- H1 + pi_b_min*Q_score(beta0=beta0, betaA=betaA, 1,1,j,l,lambda0_j, lambda0_l, tau,pi_b, tau_kw, tau_kb)
+        H1 <- H1 + pi_b_min*Q_score(beta0=beta0, betaA=betaA, 1,1,j,l,lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb)
       }
     }
     
     return(H1)
   }
-  H2_score <- function(j, beta0, betaA, lambda0, tau, pi_b){
+  H2_score <- function(j, beta0, betaA, lambda0, tau, desmat_prob){#pi_b){
     # function that integrates and takes the expectation of the A components
     
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     
-    H2 <- pi_b_j*pracma::integral(fun=V_0_score, xmin=0, xmax=tau, beta0=beta0, betaA=betaA, z_ij=1, j=j, lambda0=lambda0, tau=tau, pi_b=pi_b) + 
-      (1-pi_b_j)*pracma::integral(fun=V_0_score, xmin=0, xmax=tau, beta0=beta0, betaA=betaA, z_ij=0, j=j, lambda0=lambda0, tau=tau, pi_b=pi_b)
+    H2 <- pi_b_j*pracma::integral(fun=V_0_score, xmin=0, xmax=tau, beta0=beta0, betaA=betaA, z_ij=1, j=j, lambda0=lambda0, tau=tau, desmat_prob=desmat_prob) +#pi_b=pi_b) + 
+      (1-pi_b_j)*pracma::integral(fun=V_0_score, xmin=0, xmax=tau, beta0=beta0, betaA=betaA, z_ij=0, j=j, lambda0=lambda0, tau=tau, desmat_prob=desmat_prob)#pi_b=pi_b)
     
     return(H2)
   }
   
-  score_exp <- function(s, beta0, betaA, z_ij, j,lambda0, tau,pi_b){
+  score_exp <- function(s, beta0, betaA, z_ij, j,lambda0, tau,desmat_prob){#pi_b){
     # censoring distribution
     G_s <- 1-s/tau
     
     # W_js (ratio of s_1j/s_0j)
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     s_1j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s)
     s_0j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
     W_js <- s_1j/s_0j
@@ -712,30 +732,30 @@ shinyServer(function(input, output,session) {
     return(score_exp)
   }
   
-  H_score <- function(j, beta0, betaA, lambda0, tau,pi_b){
+  H_score <- function(j, beta0, betaA, lambda0, tau,desmat_prob){#pi_b){
     # function that integrates and takes the expectation for the same subject, cluster, period portion of B
-    pi_b_j <- sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     
-    H_score <- pi_b_j*pracma::integral(fun=score_exp,xmin=0,xmax=tau,beta0=beta0, betaA=betaA, z_ij=1,j=j,lambda0=lambda0, tau=tau,pi_b=pi_b) +
-      (1-pi_b_j)*pracma::integral(fun=score_exp,xmin=0,xmax=tau, beta0=beta0, betaA=betaA, z_ij=0,j=j,lambda0=lambda0, tau=tau,pi_b=pi_b)
+    H_score <- pi_b_j*pracma::integral(fun=score_exp,xmin=0,xmax=tau,beta0=beta0, betaA=betaA, z_ij=1,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob) +#pi_b=pi_b) +
+      (1-pi_b_j)*pracma::integral(fun=score_exp,xmin=0,xmax=tau, beta0=beta0, betaA=betaA, z_ij=0,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob)#pi_b=pi_b)
     
     return(H_score)
   }
   
-  sandwich_var_score <- function(n,m,J, lambda0,tau,pi_b, tau_kw, tau_kb, beta0=beta0, betaA=betaA){
+  sandwich_var_score <- function(m,J, lambda0,tau,desmat_prob, tau_kw, tau_kb, beta0=beta0, betaA=betaA){
     H0_sum <- H2_sum <- rep(0, J)
     H_score_sum <- rep(NA,J)
     H1_sum_eq <- H1_sum_uneq <- matrix(NA, nrow=J, ncol=J)
     for(j in seq(J)){
       
-      H0_sum[j] <- H0_score(j=j, beta0=beta0,betaA=betaA, lambda0=lambda0[j], tau=tau, pi_b=pi_b)
-      H2_sum[j] <- H2_score(j=j, beta0=beta0,betaA=betaA, lambda0=lambda0[j], tau=tau, pi_b=pi_b)
-      H_score_sum[j] <- H_score(j=j, beta0=beta0, betaA=betaA, lambda0=lambda0[j], tau=tau, pi_b=pi_b)
+      H0_sum[j] <- H0_score(j=j, beta0=beta0,betaA=betaA, lambda0=lambda0[j], tau=tau, desmat_prob=desmat_prob)#pi_b=pi_b)
+      H2_sum[j] <- H2_score(j=j, beta0=beta0,betaA=betaA, lambda0=lambda0[j], tau=tau, desmat_prob=desmat_prob)#pi_b=pi_b)
+      H_score_sum[j] <- H_score(j=j, beta0=beta0, betaA=betaA, lambda0=lambda0[j], tau=tau, desmat_prob=desmat_prob)#pi_b=pi_b)
       for(l in seq(J)){
         if(j==l){
-          H1_sum_eq[j,l] <- H1_score(j=j,l=l, beta0=beta0,betaA=betaA, lambda0_j=lambda0[j], lambda0_l=lambda0[l], tau=tau, pi_b=pi_b, tau_kw=tau_kw, tau_kb=tau_kb)
+          H1_sum_eq[j,l] <- H1_score(j=j,l=l, beta0=beta0,betaA=betaA, lambda0_j=lambda0[j], lambda0_l=lambda0[l], tau=tau, desmat_prob=desmat_prob, tau_kw=tau_kw, tau_kb=tau_kb)
         }else{
-          H1_sum_uneq[j,l] <- H1_score(j=j,l=l, beta0=beta0,betaA=betaA, lambda0_j=lambda0[j], lambda0_l=lambda0[l], tau=tau, pi_b=pi_b, tau_kw=tau_kw, tau_kb=tau_kb)
+          H1_sum_uneq[j,l] <- H1_score(j=j,l=l, beta0=beta0,betaA=betaA, lambda0_j=lambda0[j], lambda0_l=lambda0[l], tau=tau, desmat_prob=desmat_prob, tau_kw=tau_kw, tau_kb=tau_kb)
         }
         
       }
@@ -754,105 +774,216 @@ shinyServer(function(input, output,session) {
     score <- m*sum(H_score_sum)
     score2 <- m*sum(tcrossprod(H_score_sum))
     
-    score_var <- sqrt(A)/sqrt(n)
+    score_var <- sqrt(A)#/sqrt(n)
     
-    return(list(se_beta=sqrt(var_beta)/sqrt(n), se_naive=sqrt(solve(A))/sqrt(n),
-                B=sqrt(B), B_mod=sqrt(B*((n-1)/n)), score=score,
-                score2=sqrt(score2), score2_mod=sqrt(score2*((n-1)/n)),
-                A=score_var, A_mod=score_var*sqrt((n-1)/n)))
+    return(list(var_beta_sqrt=sqrt(var_beta), var_naive=sqrt(solve(A)),#/sqrt(n),
+                B=sqrt(B), #B_mod=sqrt(B*((n-1)/n)),
+                score=score,
+                score2=sqrt(score2), #score2_mod=sqrt(score2*((n-1)/n)),
+                A=score_var#, A_mod=score_var*sqrt((n-1)/n)
+                ))
     
   }
   
   #### OUTPUT ####
+  ## upload own observes ##
+  file1 <- reactive({input$file1})
+  
+  observeEvent(input$reset, {
+    file1 <- NULL
+    reset('file1')
+  })
+  
+
   ## reacts ##
-  n_power <- reactive({input$n_power})
+  n_power <- eventReactive(input$submit, {
+    input$n_power
+    })
   
-  m <- reactive({input$m})
-  n <- reactive({input$n})
-  J <- reactive({input$J})
-  power <- reactive(input$power)
+  balanced <- eventReactive(input$submit, {
+    input$balanced
+    })
   
-  tau_w <- reactive({input$tau_w})
-  tau_b <- reactive({input$tau_b})
+  m <- eventReactive(input$submit, {
+    input$m
+    })
+  
+  n_use <- eventReactive(input$submit, {
+    if( n_power() == "power" ){
+      
+      if(balanced() == "balanced"){
+        
+        input$n
+        
+      }else if(balanced() == "unbalanced"){
+        
+        if(is.null(file1())) stop("User needs to upload design matrix before the function can continue")
+        desmat <- read.csv(file1()$datapath, header=FALSE)
+        
+        nrow(desmat)
+        
+      }
+    }else{
+      NULL
+    }
+    
+  })
+  
+  J_use <- eventReactive(input$submit, {
+    if( n_power() == "power"){
+      if(balanced() == "balanced"){
+        
+        input$J
+        
+      }else if(balanced() == "unbalanced"){
+        
+        if(is.null(file1())) stop("User needs to upload design matrix before the function can continue")
+        desmat <- read.csv(file1()$datapath, header=FALSE)
+        
+        ncol(desmat)
+        
+      } 
+    }else{
+      input$J
+    }
+    
+  })
+  
+  desmat <- eventReactive(input$submit, {
+    if( is.null(n_use()) == FALSE){
+      if(balanced() == "balanced"){
+        
+        designMatrix(design = balanced(), periods = J_use(), clusters = n_use())
+        
+      }else if(balanced() == "unbalanced"){
+        
+        if(is.null(file1())) stop("User needs to upload design matrix before the function can continue")
+        desmat <- read.csv(file1()$datapath, header=FALSE)
+        desmat
+        
+      }
+    }else{
+      NULL
+    }
+  
+  })
+  
+  desmat_prob <- reactive({
+    if(n_power() == "n"){
+      W0 <- matrix( 0, ncol=J_use(), nrow=(J_use()-1) )
+      W0[upper.tri(W0)] <- 1
+      W0*(1/(J_use()-1))
+      #c(0, rep((1/(J_use()-1)), (J_use()-1)))
+      
+    }else{
+      desmat()/n_use() 
+    }
+  })
+  
+  power <- eventReactive(input$submit, {
+    input$power
+    })
+  
+  tau_w <- reactive({#eventReactive(input$submit, {
+    input$tau_w
+    })
+  tau_b <- reactive({#eventReactive(input$submit, {
+    input$tau_b
+    })
   
   #icc_w <- reactive({input$icc_w})
   #icc_b <- reactive({input$icc_b})
   
   # cv.c <- 0; cv.p <- 0
   
-  betaA <- reactive({input$beta})
+  betaA <- eventReactive(input$submit, {input$beta})
   # pa <- reactive({input$admin_censor})
   # p0 <- reactive({input$other_censor})
-  constant_baseline <- reactive({input$constant_baseline})
-  baseline_change <- reactive({input$baseline_change})
+  constant_baseline <- reactive({#eventReactive(input$submit, {
+    input$constant_baseline
+    })
+  baseline_change <- reactive({#eventReactive(input$submit, {
+    input$baseline_change
+    })
   
-  alpha <- reactive({input$sig})
+  alpha <- eventReactive(input$submit, {input$sig})
   
   ## reactive variance functions ##
-  design_varA <- reactive({
+  design_varA <- eventReactive(input$submit, {
     Cp <- 1
     beta0 <- 0
     
+    
     if(constant_baseline() == "constant"){
-      lambda0 <- 1+0*seq(0,(J()-1))
+      lambda0 <- 1+0*seq(0,(J_use()-1))
     }else{
-      lambda0 <- 1+baseline_change()*seq(0,(J()-1))
+      lambda0 <- 1+baseline_change()*seq(0,(J_use()-1))
     }
     
-    k <- rep( seq(2,J()), (n()/(J()-1)) )
-    pi_b <- c(0, rep((1/(J()-1)), (J()-1)))
+    
+    #k <- rep( seq(2,J()), (n()/(J()-1)) )
+    
     
     # wald stuff #
-    sandwich_var(n=n(),m=m(),J=J(),
-                                lambda0=lambda0,tau=Cp, pi_b=pi_b,
-                                tau_kw=tau_w(), tau_kb=tau_b(), beta=betaA())
+    sandwich_var(#n=n_use(),
+                 m=m(),J=J_use(),
+                 lambda0=lambda0,tau=Cp, desmat_prob=desmat_prob(),#pi_b=pi_b,
+                 tau_kw=tau_w(), tau_kb=tau_b(), beta=betaA())
   })
   
-  design_varA_score <- reactive({
+  
+  design_varA_score <- eventReactive(input$submit, {#reactive({
     Cp <- 1
     beta0 <- 0
     
     if(constant_baseline() == "constant"){
-      lambda0 <- 1+0*seq(0,(J()-1))
+      lambda0 <- 1+0*seq(0,(J_use()-1))
     }else{
-      lambda0 <- 1+baseline_change()*seq(0,(J()-1))
+      lambda0 <- 1+baseline_change()*seq(0,(J_use()-1))
     }
     
-    k <- rep( seq(2,J()), (n()/(J()-1)) )
-    pi_b <- c(0, rep((1/(J()-1)), (J()-1)))
+    #k <- rep( seq(2,J()), (n()/(J()-1)) )
+    #pi_b <- c(0, rep((1/(J()-1)), (J()-1)))
     
-    sandwich_var_score(n=n(),m=m(),J=J(),lambda0=lambda0,tau=Cp, pi_b=pi_b,
+    sandwich_var_score(#n=n_use(),
+                       m=m(),J=J_use(),lambda0=lambda0,tau=Cp, desmat_prob=desmat_prob(),#pi_b=pi_b,
                        tau_kw=tau_w(), tau_kb=tau_b(),
                        beta0=beta0,betaA=betaA())
   })
   
-  design_var0_score <- reactive({
+  design_var0_score <- eventReactive(input$submit, {#reactive({
     Cp <- 1
     beta0 <- 0
     
     if(constant_baseline() == "constant"){
-      lambda0 <- 1+0*seq(0,(J()-1))
+      lambda0 <- 1+0*seq(0,(J_use()-1))
     }else{
-      lambda0 <- 1+baseline_change()*seq(0,(J()-1))
+      lambda0 <- 1+baseline_change()*seq(0,(J_use()-1))
     }
     
-    k <- rep( seq(2,J()), (n()/(J()-1)) )
-    pi_b <- c(0, rep((1/(J()-1)), (J()-1)))
+    #k <- rep( seq(2,J()), (n()/(J()-1)) )
+    #pi_b <- c(0, rep((1/(J()-1)), (J()-1)))
     
     # score stuff #
-    sandwich_var_score(n=n(),m=m(),J=J(),lambda0=lambda0,tau=Cp, pi_b=pi_b,
+    sandwich_var_score(#n=n_use(),
+                       m=m(),J=J_use(),lambda0=lambda0,tau=Cp, desmat_prob=desmat_prob(),#pi_b=pi_b,
                        tau_kw=tau_w(), tau_kb=tau_b(),
                        beta0=beta0, betaA=beta0)
   })
   
   ## Render text first ##
   output$text_context <- renderText({
-    if(n_power()=="power"){
-      
-      paste0("The predicted power of a SW-CRT with J=", J(), " periods, n = ", n(), " clusters, and m = ", m(), " participants per cluster-period is:")
+    if(input$submit == 0){
+      paste0("Input your design parameters on the left and press the 'Update View' button to calculate power/number of clusters.")
+    }else{
     
-      }else{
-        paste0("For a SW-CRT to obtain at least ", power()*100,"% power with J=", J(), " periods and m = ", m(), " participants per cluster-period, the study would need:")
+      if(n_power()=="power"){
+        
+        paste0("The predicted power of a ", balanced(), " SW-CRT with J=", J_use(), " periods, n = ", n_use(), " clusters, and m = ", m(), " participants per cluster-period is:")
+      
+        }else{
+          paste0("For a SW-CRT to obtain at least ", power()*100,"% power with J=", J_use(), " periods and m = ", m(), " participants per cluster-period, the study would need:")
+        }
     }
     
   })
@@ -861,7 +992,7 @@ shinyServer(function(input, output,session) {
     if(n_power()=="power"){
       
       # calculate predicted power based on your sandwich variance and t test #
-      design_power_t <- pt((abs(betaA())/design_varA()$se_beta - qt((1-alpha()/2), n()-1)), n()-1)
+      design_power_t <- pt((abs(betaA())/(design_varA()$var_beta_sqrt/sqrt(n_use())) - qt((1-alpha()/2), n_use()-1)), n_use()-1)
       
       # output results #
       paste0(round(design_power_t*100, 2), "% under the Wald t-testing paradigm,")
@@ -869,13 +1000,15 @@ shinyServer(function(input, output,session) {
     }else{
       
       # calculate number of clusters under given power #
-      t_typeI <- qt((1-alpha()/2), n()-1)
-      t_power <- qt(power(), n()-1)
+      z_typeI <- qnorm(1-alpha()/2)
+      z_power <- qnorm(power())
+      #t_typeI <- qt((1-alpha()/2), n_use()-1)
+      #t_power <- qt(power(), n_use()-1)
       
-      n_result <- ( design_varA()$se_beta * (t_typeI + t_power)^2 )/betaA()^2
+      n_result <- ( design_varA()$var_beta_sqrt * (z_typeI + z_power) )^2/betaA()^2
       
       # output results #
-      paste0("n=", ceiling(n_result), " clusters under the Wald t-testing paradigm,")
+      paste0("n=", ceiling(n_result), " clusters under the Wald z-testing paradigm,")
       
       
     }
@@ -888,7 +1021,7 @@ shinyServer(function(input, output,session) {
     if(n_power()=="power"){
       
     # calculate predicted power based on score test #
-    score_power_predict_A <-  pnorm(abs(design_varA_score()$score)/(design_varA_score()$B/sqrt(n())) - qnorm(1-alpha()/2))
+    score_power_predict_A <-  pnorm(abs(design_varA_score()$score)/(design_varA_score()$B/sqrt(n_use())) - qnorm(1-alpha()/2))
     
     # output results #
     paste0(round(score_power_predict_A*100,2), "% under the Self and Mauritsen robust score testing paradigm, and")
@@ -899,7 +1032,8 @@ shinyServer(function(input, output,session) {
       z_typeI <- qnorm(1-alpha()/2)
       z_power <- qnorm(power())
       
-      n_result <- ( design_varA_score()$B/sqrt(n()) * (z_typeI + z_power)^2 )/abs(design_varA_score()$score)^2
+      # no need to do anything with n_use here bc score and B are output without that division
+      n_result <- ( design_varA_score()$B * (z_typeI + z_power) )^2/abs(design_varA_score()$score)^2#/sqrt(n_use()) * (z_typeI + z_power)^2 )/abs(design_varA_score()$score)^2
       
       # output results #
       paste0("n=", ceiling(n_result), " clusters under the Self and Mauritsen robust score testing paradigm, and")
@@ -914,7 +1048,7 @@ shinyServer(function(input, output,session) {
     if(n_power() == "power"){
       
       # calculate predicted power based on score test #
-      score_power_predict_tang <-  pnorm(abs(design_varA_score()$score)/(design_varA_score()$B/sqrt(n())) - qnorm(1-alpha()/2)*(design_var0_score()$B/design_varA_score()$B))
+      score_power_predict_tang <-  pnorm(abs(design_varA_score()$score)/(design_varA_score()$B/sqrt(n_use())) - qnorm(1-alpha()/2)*(design_var0_score()$B/design_varA_score()$B))
       
       # output results #
       paste0(round(score_power_predict_tang*100,2), "% under the Tang robust score testing paradigm.")
@@ -925,7 +1059,8 @@ shinyServer(function(input, output,session) {
       z_typeI <- qnorm(1-alpha()/2)
       z_power <- qnorm(power())
       
-      n_result <- ( design_varA_score()$B/sqrt(n()) * ((z_typeI + z_power)*(1/design_var0_score()$B/design_varA_score()$B))^2 )/abs(design_varA_score()$score)^2
+      # still need to figure out what's happening here
+      n_result <- ( design_varA_score()$B * (z_power + z_typeI*(design_var0_score()$B/design_varA_score()$B)) )^2/abs(design_varA_score()$score)^2#/sqrt(n_use()) * ((z_typeI + z_power)*(1/design_var0_score()$B/design_varA_score()$B))^2 )/abs(design_varA_score()$score)^2
       
       # output results #
       paste0("n=", ceiling(n_result), " clusters under the Tang robust score testing paradigm.")
@@ -936,9 +1071,40 @@ shinyServer(function(input, output,session) {
   })
   
   output$text_ICCs <- renderText({
-    
+  
     # output results #
     paste0("The within-period generalized ICC is estimated to be ", round(design_varA()$icc_w,2), " and the between-period generalized ICC is estimated to be ", round(design_varA()$icc_b, 2),".")
+    
   })
-
+  
+  output$design_matrix <- renderTable({
+    if( n_power() == "n"){
+      print("no")
+    }else{
+      
+      col_names <- paste("Period ", seq(J_use()))
+      row_names <- paste("Cluster ", seq(n_use()))
+      
+      if(balanced() == "balanced"){
+        desmat_display <- as.data.frame(desmat())#designMatrix(design = balanced(), periods = J_use(), clusters = n())
+        
+        colnames(desmat_display) <- col_names
+        rownames(desmat_display) <- row_names
+        
+      }else if(balanced() == "unbalanced"){
+        if(is.null(file1())) stop("User needs to upload design matrix before the function can continue")
+        desmat_display <- as.data.frame(desmat())#designMatrix(design = balanced(), file=file1())
+        
+        colnames(desmat_display) <- col_names
+        rownames(desmat_display) <- row_names
+      }
+      
+      desmat_display
+      #head(desmat_display, n=nrow(desmat_display))
+    }
+    
+    
+  },digits=0, rownames=TRUE)
+  
+  
 })
