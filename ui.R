@@ -51,12 +51,12 @@ shinyUI(fluidPage(
         radioButtons("balanced",
                      "Design type:",
                      c("Balanced"="balanced",
-                       "Unbalanced"="upload")
+                       "Unbalanced (upload your own design)"="unbalanced")
         ),
         
         ## upload own design ##
         conditionalPanel(
-          condition = "input.balanced == 'upload'",
+          condition = "input.balanced == 'unbalanced'",
           fileInput("file1", "Upload a design matrix:", accept=c('text/plain', '.csv')),
           helpText("The file must be a comma separated .csv file consisting of 0s (control) and 1s (treatment), with a column for each time period and a row for each cluster. There may not be any missing cluster-periods. Do not include row or column names.", style="margin-top:-0.5em; margin-bottom:1em;")
         ),

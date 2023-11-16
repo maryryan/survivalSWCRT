@@ -398,7 +398,7 @@ shinyServer(function(input, output,session) {
       }
       
       
-    }else if(design == "upload"){
+    }else if(design == "unbalanced"){
       read.csv(file$datapath, header=FALSE)
     }
   }
@@ -815,7 +815,7 @@ shinyServer(function(input, output,session) {
         
         input$n
         
-      }else if(balanced() == "upload"){
+      }else if(balanced() == "unbalanced"){
         
         if(is.null(file1())) stop("User needs to upload design matrix before the function can continue")
         desmat <- read.csv(file1()$datapath, header=FALSE)
@@ -835,7 +835,7 @@ shinyServer(function(input, output,session) {
         
         input$J
         
-      }else if(balanced() == "upload"){
+      }else if(balanced() == "unbalanced"){
         
         if(is.null(file1())) stop("User needs to upload design matrix before the function can continue")
         desmat <- read.csv(file1()$datapath, header=FALSE)
@@ -855,7 +855,7 @@ shinyServer(function(input, output,session) {
         
         designMatrix(design = balanced(), periods = J_use(), clusters = n_use())
         
-      }else if(balanced() == "upload"){
+      }else if(balanced() == "unbalanced"){
         
         if(is.null(file1())) stop("User needs to upload design matrix before the function can continue")
         desmat <- read.csv(file1()$datapath, header=FALSE)
@@ -973,12 +973,17 @@ shinyServer(function(input, output,session) {
   
   ## Render text first ##
   output$text_context <- renderText({
-    if(n_power()=="power"){
-      
-      paste0("The predicted power of a SW-CRT with J=", J_use(), " periods, n = ", n_use(), " clusters, and m = ", m(), " participants per cluster-period is:")
+    if(input$submit == 0){
+      paste0("Input your design parameters on the left and press the 'Update View' button to calculate power/number of clusters.")
+    }else{
     
-      }else{
-        paste0("For a SW-CRT to obtain at least ", power()*100,"% power with J=", J_use(), " periods and m = ", m(), " participants per cluster-period, the study would need:")
+      if(n_power()=="power"){
+        
+        paste0("The predicted power of a ", balanced(), " SW-CRT with J=", J_use(), " periods, n = ", n_use(), " clusters, and m = ", m(), " participants per cluster-period is:")
+      
+        }else{
+          paste0("For a SW-CRT to obtain at least ", power()*100,"% power with J=", J_use(), " periods and m = ", m(), " participants per cluster-period, the study would need:")
+        }
     }
     
   })
@@ -1066,27 +1071,40 @@ shinyServer(function(input, output,session) {
   })
   
   output$text_ICCs <- renderText({
-    
+  
     # output results #
     paste0("The within-period generalized ICC is estimated to be ", round(design_varA()$icc_w,2), " and the between-period generalized ICC is estimated to be ", round(design_varA()$icc_b, 2),".")
+    
   })
   
   output$design_matrix <- renderTable({
-    if( n_power == "n"){
+    if( n_power() == "n"){
       print("no")
     }else{
+      
+      col_names <- paste("Period ", seq(J_use()))
+      row_names <- paste("Cluster ", seq(n_use()))
+      
       if(balanced() == "balanced"){
-        desmat_display <- desmat()#designMatrix(design = balanced(), periods = J_use(), clusters = n())
-      }else if(balanced() == "upload"){
+        desmat_display <- as.data.frame(desmat())#designMatrix(design = balanced(), periods = J_use(), clusters = n())
+        
+        colnames(desmat_display) <- col_names
+        rownames(desmat_display) <- row_names
+        
+      }else if(balanced() == "unbalanced"){
         if(is.null(file1())) stop("User needs to upload design matrix before the function can continue")
-        desmat_display <- designMatrix(design = balanced(), file=file1())
+        desmat_display <- as.data.frame(desmat())#designMatrix(design = balanced(), file=file1())
+        
+        colnames(desmat_display) <- col_names
+        rownames(desmat_display) <- row_names
       }
       
-      head(desmat_display, n=nrow(desmat_display))
+      desmat_display
+      #head(desmat_display, n=nrow(desmat_display))
     }
     
     
-  },digits=0)
+  },digits=0, rownames=TRUE)
   
   
 })
