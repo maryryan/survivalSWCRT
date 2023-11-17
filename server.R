@@ -1059,7 +1059,6 @@ shinyServer(function(input, output,session) {
       z_typeI <- qnorm(1-alpha()/2)
       z_power <- qnorm(power())
       
-      # still need to figure out what's happening here
       n_result <- ( design_varA_score()$B * (z_power + z_typeI*(design_var0_score()$B/design_varA_score()$B)) )^2/abs(design_varA_score()$score)^2#/sqrt(n_use()) * ((z_typeI + z_power)*(1/design_var0_score()$B/design_varA_score()$B))^2 )/abs(design_varA_score()$score)^2
       
       # output results #
@@ -1078,8 +1077,12 @@ shinyServer(function(input, output,session) {
   })
   
   output$design_matrix <- renderTable({
-    if( n_power() == "n"){
-      print("no")
+    if( is.null(n_use()) == TRUE){
+      
+      desmat_display <- as.data.frame( designMatrix(design = "balanced", periods = J_use(), clusters = (J_use()-1)) )
+      colnames(desmat_display) <- paste("Period ", seq(J_use()))
+      rownames(desmat_display) <- paste("Sequence ", seq((J_use() - 1)))
+    
     }else{
       
       col_names <- paste("Period ", seq(J_use()))
@@ -1099,10 +1102,8 @@ shinyServer(function(input, output,session) {
         rownames(desmat_display) <- row_names
       }
       
-      desmat_display
-      #head(desmat_display, n=nrow(desmat_display))
     }
-    
+    desmat_display
     
   },digits=0, rownames=TRUE)
   

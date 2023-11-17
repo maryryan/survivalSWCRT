@@ -194,11 +194,12 @@ shinyUI(fluidPage(
                         style="font-size:20px" )
                   ),
         
-        #conditionalPanel(
-         # condition = "input.n_power == 'power'",
-          tabPanel("Design Matrix",#br(),
-                   tableOutput("design_matrix")
-        #)
+        tabPanel("Design Matrix",
+                 tableOutput("design_matrix"),
+                 conditionalPanel(
+                   condition="input.n_power == 'n'",
+                   print("*Calculations are made assuming total number of clusters calculated in 'Results' tab are evenly distributed to each of the above sequences.")
+                 )
       )
         
     )#end tablesetPanel
