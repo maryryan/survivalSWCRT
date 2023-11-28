@@ -174,6 +174,25 @@ shinyUI(fluidPage(
       numericInput(inputId="sig",
                    label="Significance level",
                    0.05, min=0.000001, max=1, step=0.001),
+
+      ## loading message when the app is calculating ##
+      tags$head(tags$style(type="text/css", "
+             #loadmessage {
+               position: fixed;
+               top: 8%;
+               left: 33.5%;
+               width: 50%;
+               padding: 5px 0px 5px 0px;
+               text-align: center;
+               font-weight: bold;
+               font-size: 150%;
+               color: #000000;
+               background-color: #CCFF66;
+               z-index: 105;
+             }
+          ")),
+      conditionalPanel(condition="$('html').hasClass('shiny-busy')",
+                       tags$div("Loading...",id="loadmessage")),
       
       actionButton("submit", "Update View")
       
