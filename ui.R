@@ -218,7 +218,12 @@ shinyUI(fluidPage(
                  conditionalPanel(
                    condition="input.n_power == 'n'",
                    print("*Calculations are made assuming total number of clusters calculated in 'Results' tab are evenly distributed to each of the above sequences.")
-                 )
+                 ),
+                 
+      ),
+      tabPanel("References and Resources", 
+               h3("References and Resources"),
+               p("This application has been written by Mary M. Ryan (University of Wisconsin - Madison USA), Fan Li (Yale School of Public Health USA), and with input from Monica Taljaard (University of Ottawa - Ottawa Hospital Research Institute CA). Please email mary.ryan@wisc.edu if you need to report errors or would like to submit comments or feedback.", style = "font-size:13pt;")
       )
         
     )#end tablesetPanel
