@@ -1,0 +1,12 @@
+name: survivalSWCRT
+title: survivalSWCRT
+username: mary-ryan
+account: mary-ryan
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 10703930
+bundleId: 8001395
+url: https://mary-ryan.shinyapps.io/survivalSWCRT/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
