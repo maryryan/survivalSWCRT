@@ -5,7 +5,8 @@ account: mary-ryan
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 8406676
-bundleId: 8001401
+bundleId: 8041838
 url: https://mary-ryan.shinyapps.io/survival-SWD-app/
 asMultiple: FALSE
 asStatic: FALSE
+ignoredFiles: catheter-scenarios.txt|CATHTAG-scenarios-biometrics.R|gicc-tau-scenarios-fixed-taub.txt|gicc-tau-scenarios-fixed-tauw.txt|main_sim_alt_scenarios.txt|main_sim_null_scenarios.txt|sim-study-gicc-biometrics.R|sim-study-main-biometrics.R|sim-study-TTE-as-binary-biometrics.R
