@@ -53,19 +53,21 @@ shinyUI(fluidPage(
                      c("Balanced"="balanced",
                        "Unbalanced (upload your own design)"="unbalanced")
         ),
+        helpText("Balanced designs refer to randomization schemes where an equal number of clusters are randomized to each treatment sequence.", style="margin-top:-1em; margin-bottom:1em;"),
+        
         
         ## upload own design ##
         conditionalPanel(
           condition = "input.balanced == 'unbalanced'",
           fileInput("file1", "Upload a design matrix:", accept=c('text/plain', '.csv')),
-          helpText("The file must be a comma separated .csv file consisting of 0s (control) and 1s (treatment), with a column for each time period and a row for each cluster. There may not be any missing cluster-periods. Do not include row or column names.", style="margin-top:-0.5em; margin-bottom:1em;")
+          helpText("The file must be a comma separated .csv file consisting of 0s (control) and 1s (treatment), with a column for each time period and a row for each cluster. There may not be any missing cluster-periods. Do not include row or column names.", style="margin-top:-1em; margin-bottom:1em;")
         ),
         
         conditionalPanel(
           condition = "input.balanced == 'balanced'",
           # clusters #
           numericInput("n",
-                       "Number of clusters:",
+                       "Number of clusters (n):",
                        min=2,
                        max=1000,
                        value=2)
@@ -74,16 +76,17 @@ shinyUI(fluidPage(
       
       # cluster size #
       numericInput("m",
-                   "Cluster-period size:",
+                   "Cluster-period size (m):",
                    min=2,
                    max=100000,
                    value=2),
+      helpText("Cluster-period size is the number of participants recruited per cluster in one time period. Power calculations assume cluster-period size is equal across clusters and time.", style="margin-top:-1em; margin-bottom:1em;"),
       
       # time periods #
       conditionalPanel(
         condition = "input.balanced == 'balanced' | input.n_power == 'n'",
         numericInput("J",
-                     "Number of time periods:",
+                     "Number of time periods (J):",
                      min = 3,
                      max = 50,
                      value = 3)
@@ -105,6 +108,7 @@ shinyUI(fluidPage(
                    min=0,
                    max=999999999,
                    value=1),
+      helpText("Treatment effect is measured as a log hazard ratio.", style="margin-top:-1em; margin-bottom:1em;"),
       # correlations or ICC? #
       # radioButtons("icc_tau",
       #              "Specify within- and between-period Kendall's tau or ICCs?",
@@ -149,6 +153,8 @@ shinyUI(fluidPage(
                    c("Constant"="constant",
                      "Change by constant over time"="change_t")
       ),
+      helpText(withMathJax("Constant baseline hazard: \\(\\lambda_{0j}(t) = \\lambda_0(t)\\); Baseline hazard changing by constant \\(C\\) over time: \\(\\lambda_{0j}(t) = \\lambda_0(t) + C(j-1)\\)"), style="margin-top:-1em; margin-bottom:1em;"),
+      
       conditionalPanel(
         condition="input.constant_baseline == 'change_t'",
         numericInput("baseline_change",
@@ -223,7 +229,8 @@ shinyUI(fluidPage(
       ),
       tabPanel("References and Resources", 
                h3("References and Resources"),
-               p("This application has been written by Mary M. Ryan (University of Wisconsin - Madison USA), Fan Li (Yale School of Public Health USA), and with input from Monica Taljaard (University of Ottawa - Ottawa Hospital Research Institute CA). Please email mary.ryan@wisc.edu if you need to report errors or would like to submit comments or feedback.", style = "font-size:13pt;")
+               HTML("<p style = 'font-size:13pt;'>This application has been written by Mary M. Ryan (University of Wisconsin - Madison USA), Fan Li (Yale School of Public Health USA), and with input from Monica Taljaard (University of Ottawa - Ottawa Hospital Research Institute CA). Please email <a href='mailto:mary.ryan@wisc.edu'>mary.ryan@wisc.edu</a> if you need to report errors or would like to submit comments or feedback.</p>"),
+               p("The code repository for this application can be found at: ", tags$a(href="https://github.com/maryryan/survivalSWCRT", "https://github.com/maryryan/survivalSWCRT"), style = "font-size:13pt;")
       )
         
     )#end tablesetPanel
