@@ -25,13 +25,13 @@ shinyServer(function(input, output,session) {
   # set maximum between-period kendall's tau to be smaller than within-period tau #
   observe(updateNumericInput(session, "tau_b", max = tau_w() - .Machine$double.eps,))
   
-  #### FUNCTIONS ####
-  q_0 <- function(s, beta, z_ij, j,lambda0, tau,desmat_prob){#pi_b){
+  #### WALD POWER FUNCTIONS ####
+  q_0 <- function(s, beta, z_ij, j,lambda0, tau,desmat_prob){
     # censoring distribution
     G_s <- 1-s/tau
     
     # W_js (ratio of s_1j/s_0j)
-    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])
     s_1j <- pi_b_j * exp(beta - exp(beta)*lambda0*s)
     s_0j <- pi_b_j * exp(beta - exp(beta)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
     W_js <- s_1j/s_0j
@@ -43,12 +43,11 @@ shinyServer(function(input, output,session) {
     
     # final output
     q0 <- G_s*(z_ij-W_js)^2*f_ij_s
-    #pi_b_j*(G_s*(1-W_js)^2*f_ij_s_1) + (1-pi_b_j)*(G_s*(W_js)^2*f_ij_s_0)
     
     return(q0)
   }
   
-  q_1 <- function(s, t, beta, z_ij, z_il, j,l,lambda0_j, lambda0_l, tau, desmat_prob, tau_kw, tau_kb){
+  q_1 <- function(s, t, beta, z_ij, z_il, j,l,lambda0_j, lambda0_l, tau,desmat_prob, tau_kw, tau_kb){
     
     # transform kendall's tau into correlation parameters
     theta_b <- 1-tau_kb
@@ -58,12 +57,12 @@ shinyServer(function(input, output,session) {
     G_st <- (1-s/tau)*(1-t/tau)
     
     # Ws
-    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])
     s_1js <- pi_b_j * exp(beta - exp(beta)*lambda0_j*s)
     s_0js <- pi_b_j * exp(beta - exp(beta)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
     W_js <- s_1js/s_0js
     
-    pi_b_l <- sum(desmat_prob[,l])#sum(pi_b[1:l])
+    pi_b_l <- sum(desmat_prob[,l])
     s_1lt <- pi_b_l * exp(beta - exp(beta)*lambda0_l*t)
     s_0lt <- pi_b_l * exp(beta - exp(beta)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
     W_lt <- s_1lt/s_0lt
@@ -77,14 +76,12 @@ shinyServer(function(input, output,session) {
     if(j != l){
       survivor_jl <- exp( -( (lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b) )^theta_b )
       
-      
       f_ijl_st <- lambda_ij*lambda_il*survivor_jl*(lambda_ij*s)^((1/theta_b)-1)*(lambda_il*t)^((1/theta_b)-1)*( (lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b) )^(2*theta_b-2)*( 1+((1/theta_b)-1)*((lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b))^(-theta_b) )
       
       
     }else{
       # same period #
       survivor_jl <- exp( -( (lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w) )^theta_w )
-      
       
       f_ijl_st <- lambda_ij*lambda_il*survivor_jl*(lambda_ij*s)^((1/theta_w)-1)*(lambda_il*t)^((1/theta_w)-1)*( (lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w) )^(2*theta_w-2)*( 1+((1/theta_w)-1)*((lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w))^(-theta_w) )
       
@@ -107,7 +104,7 @@ shinyServer(function(input, output,session) {
     G_st <- (1-s/tau)*(1-t/tau)
     
     # Ws
-    pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
+    pi_b_j <- sum(desmat_prob[,j])
     s_1js <- pi_b_j * exp(beta - exp(beta)*lambda0_j*s)
     s_0js <- pi_b_j * exp(beta - exp(beta)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
     W_js <- s_1js/s_0js
@@ -126,27 +123,20 @@ shinyServer(function(input, output,session) {
     if(j != l){
       survivor_jl <- exp( -( (lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b) )^theta_b )
       
-      
       survivor_div <- -(1/s)*(lambda_ij*s)^(1/theta_b)*survivor_jl*((lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b))^(theta_b - 1)
-      #-lambda_ij*survivor_jl*(lambda_ij*s)^((1/theta_b)-1)*( (lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b) )^(theta_b - 1)
-      
       
     }else{
       # same period #
       survivor_jl <- exp( -( (lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w) )^theta_w )
       
-      
       survivor_div <- -(1/s)*(lambda_ij*s)^(1/theta_w)*survivor_jl*((lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w))^(theta_w - 1)
-      #-lambda_ij*survivor_jl*(lambda_ij*s)^((1/theta_w)-1)*( (lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w) )^(theta_w - 1)
       
     }
     
     # Final output
     q2 <-  G_st*(z_ij-W_js)*(z_il-W_lt)*(-survivor_div)*lambda_il
     
-    
     return(q2)
-    
     
   }
   
@@ -179,18 +169,14 @@ shinyServer(function(input, output,session) {
     if(j != l){
       survivor_jl <- exp( -( (lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b) )^theta_b )
       
-      
       survivor_div <- -(1/t)*(lambda_il*t)^(1/theta_b)*survivor_jl*((lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b))^(theta_b - 1)
-      #-lambda_il*survivor_jl*(lambda_il*t)^((1/theta_b)-1)*( (lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b) )^(theta_b - 1)
       
     }
     else{
       # same period #
       survivor_jl <- exp( -( (lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w) )^theta_w )
       
-      
       survivor_div <- -(1/t)*(lambda_il*t)^(1/theta_w)*survivor_jl*((lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w))^(theta_w - 1)
-      #-lambda_il*survivor_jl*(lambda_il*t)^((1/theta_w)-1)*( (lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w) )^(theta_w - 1)
       
     }
     
@@ -198,7 +184,6 @@ shinyServer(function(input, output,session) {
     q3 <-  G_st*(z_ij-W_js)*(z_il-W_lt)*(-survivor_div)*lambda_ij
     
     return(q3)
-    
     
   } 
   
@@ -237,20 +222,14 @@ shinyServer(function(input, output,session) {
       
     }
     
-    # Final output
-    # pi_b_min <- ifelse( j < l, sum(pi_b[1:(j+1)]), sum(pi_b[1:(l+1)]) )
-    # pi_b_max <- ifelse( j > l, sum(pi_b[1:j]), sum(pi_b[1:l]) )
-    # pi_b_mid <- ifelse( j > l, sum(pi_b[(l+1):j]), sum(pi_b[(j+1):j]) )
-    
     q4 <-  G_st*(z_ij-W_js)*(z_il-W_lt)*survivor_jl*lambda_ij*lambda_il
-    
     
     return(q4)
     
   }
   
   # for the bread A #
-  V_0 <- function(s, beta, z_ij, j, lambda0, tau, desmat_prob){#pi_b){
+  V_0 <- function(s, beta, z_ij, j, lambda0, tau, desmat_prob){
     
     # censoring distribution
     G_s <- 1-s/tau
@@ -259,16 +238,13 @@ shinyServer(function(input, output,session) {
     pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     s_1j <- s_2j <- pi_b_j * exp(beta - exp(beta)*lambda0*s)
     s_0j <- pi_b_j * exp(beta - exp(beta)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
-    #W_js <- s_1j/s_0j
-    #W_js2 <- (s_1j^2)/(s_0j^2)
     
     # Density functions (negative derivative of the survival function)
     f_ij_s <- lambda0*exp(z_ij*beta)*exp(-lambda0*s*exp(z_ij*beta))
     
-    v <- G_s*((s_2j/s_0j) - (s_1j^2)/(s_0j^2))*f_ij_s#(W_js - W_js2)*f_ij_s
+    v <- G_s*((s_2j/s_0j) - (s_1j^2)/(s_0j^2))*f_ij_s
     
     return(v)
-    
     
   }
   
@@ -279,16 +255,16 @@ shinyServer(function(input, output,session) {
       dblquad(q_2,0,tau,0,tau, dim=2, beta=beta, z_ij=z_ij, z_il=z_il, j=j, l=l,lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,desmat_prob=desmat_prob, tau_kw=tau_kw, tau_kb=tau_kb) -
       dblquad(q_3,0,tau,0,tau,dim=2, beta=beta, z_ij=z_ij, z_il=z_il, j=j, l=l, lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,desmat_prob=desmat_prob, tau_kw=tau_kw, tau_kb=tau_kb) +
       dblquad(q_4,0,tau,0,tau, dim=2, beta=beta, z_ij=z_ij, z_il=z_il, j=j, l=l,lambda0_j=lambda0_j, lambda0_l=lambda0_l, tau=tau,desmat_prob=desmat_prob, tau_kw=tau_kw, tau_kb=tau_kb)
-
+    
     return(Q)
   }
   
-  H0 <- function(j, beta, lambda0, tau,desmat_prob){#pi_b){
+  H0 <- function(j, beta, lambda0, tau,desmat_prob){
     # function that integrates and takes the expectation for the same subject, cluster, period portion of B
     pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     
-    H0 <- pi_b_j*pracma::integral(fun=q_0,xmin=0,xmax=tau,beta=beta, z_ij=1,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob) +#pi_b=pi_b) +
-      (1-pi_b_j)*pracma::integral(fun=q_0,xmin=0,xmax=tau, beta=beta, z_ij=0,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob)#pi_b=pi_b)
+    H0 <- pi_b_j*pracma::integral(fun=q_0,xmin=0,xmax=tau,beta=beta, z_ij=1,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob) +
+      (1-pi_b_j)*pracma::integral(fun=q_0,xmin=0,xmax=tau, beta=beta, z_ij=0,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob)
     
     return(H0)
   }
@@ -323,14 +299,13 @@ shinyServer(function(input, output,session) {
     return(H1)
   }
   
-  # bread of the sandwich
-  H2 <- function(j, beta, lambda0, tau, desmat_prob){#pi_b){
+  H2 <- function(j, beta, lambda0, tau, desmat_prob){
     # function that integrates and takes the expectation of the A components
     
     pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     
-    H2 <- pi_b_j*pracma::integral(fun=V_0, xmin=0, xmax=tau, beta=beta, z_ij=1, j=j, lambda0=lambda0, tau=tau, desmat_prob=desmat_prob) +#pi_b=pi_b) + 
-      (1-pi_b_j)*pracma::integral(fun=V_0, xmin=0, xmax=tau, beta=beta, z_ij=0, j=j, lambda0=lambda0, tau=tau, desmat_prob=desmat_prob)#pi_b=pi_b)
+    H2 <- pi_b_j*pracma::integral(fun=V_0, xmin=0, xmax=tau, beta=beta, z_ij=1, j=j, lambda0=lambda0, tau=tau, desmat_prob=desmat_prob) + 
+      (1-pi_b_j)*pracma::integral(fun=V_0, xmin=0, xmax=tau, beta=beta, z_ij=0, j=j, lambda0=lambda0, tau=tau, desmat_prob=desmat_prob)
     
     return(H2)
   }
@@ -341,9 +316,9 @@ shinyServer(function(input, output,session) {
     H1_sum_eq <- H1_sum_uneq <- H0_sum_iccb <- matrix(NA, nrow=J, ncol=J)
     for(j in seq(J)){
       
-      H0_sum[j] <- H0(j=j, beta=beta, lambda0=lambda0[j], tau=tau, desmat_prob=desmat_prob)#pi_b=pi_b)
-      H2_sum[j] <- H2(j=j, beta=beta, lambda0=lambda0[j], tau=tau, desmat_prob=desmat_prob)#pi_b=pi_b)
-      #H_score_sum[j] <- H_score(j=j, beta=beta, lambda0=lambda0[j], tau=tau, pi_b=pi_b)
+      H0_sum[j] <- H0(j=j, beta=beta, lambda0=lambda0[j], tau=tau, desmat_prob=desmat_prob)
+      H2_sum[j] <- H2(j=j, beta=beta, lambda0=lambda0[j], tau=tau, desmat_prob=desmat_prob)
+      
       for(l in seq(J)){
         if(j==l){
           H1_sum_eq[j,l] <- H1(j=j,l=l, beta=beta, lambda0_j=lambda0[j], lambda0_l=lambda0[l], tau=tau, desmat_prob=desmat_prob, tau_kw=tau_kw, tau_kb=tau_kb)
@@ -368,61 +343,33 @@ shinyServer(function(input, output,session) {
     
     # ICCs #
     icc_w <- sum(H1_sum_eq, na.rm=T)/sum(H0_sum)
-    icc_b <- sum(H1_sum_uneq, na.rm=T)/((J-1)*sum(H0_sum))#sum(H0_sum_iccb, na.rm=T))#
+    icc_b <- sum(H1_sum_uneq, na.rm=T)/((J-1)*sum(H0_sum))
     
-    # also make the score #
-    #score <- m*sum(H_score_sum)
-    #score2 <- m*sum(H_score_sum^2)
-    
-    return(list(var_beta_sqrt=sqrt(var_beta), var_naive=sqrt(solve(A)),#/sqrt(n),
-                B=sqrt(B), #B_mod=sqrt(B*((n-1)/n)), #score=score,
-                #score2=sqrt(score2), score2_mod=sqrt(score2*((n-1)/n)),
-                A=sqrt(A),#/sqrt(n),
-                icc_w=icc_w, icc_b=icc_b#,
-                #se_beta_iccs=sqrt(var_beta_iccs)/sqrt(n)
-                ))
+    return(list(var_beta_sqrt=sqrt(var_beta),
+                var_naive=sqrt(solve(A)),
+                B=sqrt(B),
+                A=sqrt(A),
+                icc_w=icc_w, icc_b=icc_b))
     
   }
   
-  designMatrix <- function(design, periods=NULL, clusters=NULL, file=NULL){
-    if(design == "balanced"){
-      sequences <- periods-1
-      
-      if( clusters %% sequences != 0 ){
-        stop("Must have equal number of clusters per sequence for design to be balanaced")
-      }else{
-        
-        W0 <- matrix(0, ncol=periods, nrow=sequences)
-        W0[upper.tri(W0)] <- 1
-        W0[rep(1:nrow(W0), each = (clusters/sequences)),]
-      }
-      
-      
-    }else if(design == "unbalanced"){
-      read.csv(file$datapath, header=FALSE)
-    }
-  }
-  
-  
-  #### score functions ####
-  q_0_score <- function(s, beta0, betaA, z_ij, j,lambda0, tau,desmat_prob){#pi_b){
+  #### SCORE POWER FUNCTIONS ####
+  q_0_score <- function(s, beta0, betaA, z_ij, j,lambda0, tau,desmat_prob){
     # censoring distribution
     G_s <- 1-s/tau
     
     # W_js (ratio of s_1j/s_0j)
     pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
-    s_1j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s)
-    s_0j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
+    s_1j <- pi_b_j * exp(beta0 - exp(beta0)*lambda0*s)
+    s_0j <- pi_b_j * exp(beta0 - exp(beta0)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
     W_js <- s_1j/s_0j
     
     # Density functions (negative derivative of the survival function)
     # density on treatment arm # 
-    f_ij_s <- lambda0*exp(z_ij*betaA)*exp(-lambda0*s*exp(z_ij*betaA))
-    
+    f_ij_s <- lambda0*exp(z_ij*beta0)*exp(-lambda0*s*exp(z_ij*betaA))
     
     # final output
     q0 <- G_s*(z_ij-W_js)^2*f_ij_s
-    #pi_b_j*(G_s*(1-W_js)^2*f_ij_s_1) + (1-pi_b_j)*(G_s*(W_js)^2*f_ij_s_0)
     
     return(q0)
   }
@@ -438,17 +385,19 @@ shinyServer(function(input, output,session) {
     
     # Ws
     pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
-    s_1js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s)
-    s_0js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
+    s_1js <- pi_b_j * exp(beta0 - exp(beta0)*lambda0_j*s)
+    s_0js <- pi_b_j * exp(beta0 - exp(beta0)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
     W_js <- s_1js/s_0js
     
     pi_b_l <- sum(desmat_prob[,l])#sum(pi_b[1:l])
-    s_1lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t)
-    s_0lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
+    s_1lt <- pi_b_l * exp(beta0 - exp(beta0)*lambda0_l*t)
+    s_0lt <- pi_b_l * exp(beta0 - exp(beta0)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
     W_lt <- s_1lt/s_0lt
     
     # Density functions
     # these will be the same if j == l 
+    lambda_ij_0 <- lambda0_j*exp(z_ij*beta0)
+    lambda_il_0 <- lambda0_l*exp(z_il*beta0)
     lambda_ij <- lambda0_j*exp(z_ij*betaA)
     lambda_il <- lambda0_l*exp(z_il*betaA)
     
@@ -456,21 +405,16 @@ shinyServer(function(input, output,session) {
     if(j != l){
       survivor_jl <- exp( -( (lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b) )^theta_b )
       
-      
       f_ijl_st <- lambda_ij*lambda_il*survivor_jl*(lambda_ij*s)^((1/theta_b)-1)*(lambda_il*t)^((1/theta_b)-1)*( (lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b) )^(2*theta_b-2)*( 1+((1/theta_b)-1)*((lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b))^(-theta_b) )
-      
       
     }else{
       # same period #
       survivor_jl <- exp( -( (lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w) )^theta_w )
       
-      
       f_ijl_st <- lambda_ij*lambda_il*survivor_jl*(lambda_ij*s)^((1/theta_w)-1)*(lambda_il*t)^((1/theta_w)-1)*( (lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w) )^(2*theta_w-2)*( 1+((1/theta_w)-1)*((lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w))^(-theta_w) )
-      
     }
     
     q1 <- G_st*(z_ij - W_js)*(z_il - W_lt)*f_ijl_st
-    
     
     return(q1)
     
@@ -487,45 +431,39 @@ shinyServer(function(input, output,session) {
     
     # Ws
     pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
-    s_1js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s)
-    s_0js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
+    s_1js <- pi_b_j * exp(beta0 - exp(beta0)*lambda0_j*s)
+    s_0js <- pi_b_j * exp(beta0 - exp(beta0)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
     W_js <- s_1js/s_0js
     
     pi_b_l <- sum(desmat_prob[,l])#sum(pi_b[1:l])
-    s_1lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t)
-    s_0lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
+    s_1lt <- pi_b_l * exp(beta0 - exp(beta0)*lambda0_l*t)
+    s_0lt <- pi_b_l * exp(beta0 - exp(beta0)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
     W_lt <- s_1lt/s_0lt
     
     # Density functions
+    lambda_ij_0 <- lambda0_j*exp(z_ij*beta0)
+    lambda_il_0 <- lambda0_l*exp(z_il*beta0)
     lambda_ij <- lambda0_j*exp(z_ij*betaA)
     lambda_il <- lambda0_l*exp(z_il*betaA)
-    
     
     # different periods #
     if(j != l){
       survivor_jl <- exp( -( (lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b) )^theta_b )
       
-      
       survivor_div <- -(1/s)*(lambda_ij*s)^(1/theta_b)*survivor_jl*((lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b))^(theta_b - 1)
-      #-lambda_ij*survivor_jl*(lambda_ij*s)^((1/theta_b)-1)*( (lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b) )^(theta_b - 1)
-      
       
     }else{
       # same period #
       survivor_jl <- exp( -( (lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w) )^theta_w )
       
-      
       survivor_div <- -(1/s)*(lambda_ij*s)^(1/theta_w)*survivor_jl*((lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w))^(theta_w - 1)
-      #-lambda_ij*survivor_jl*(lambda_ij*s)^((1/theta_w)-1)*( (lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w) )^(theta_w - 1)
       
     }
     
     # Final output
     q2 <-  G_st*(z_ij-W_js)*(z_il-W_lt)*(-survivor_div)*lambda_il
     
-    
     return(q2)
-    
     
   }
   
@@ -540,16 +478,18 @@ shinyServer(function(input, output,session) {
     
     # Ws
     pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
-    s_1js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s)
-    s_0js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
+    s_1js <- pi_b_j * exp(beta0 - exp(beta0)*lambda0_j*s)
+    s_0js <- pi_b_j * exp(beta0 - exp(beta0)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
     W_js <- s_1js/s_0js
     
     pi_b_l <- sum(desmat_prob[,l])#sum(pi_b[1:l])
-    s_1lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t)
-    s_0lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
+    s_1lt <- pi_b_l * exp(beta0 - exp(beta0)*lambda0_l*t)
+    s_0lt <- pi_b_l * exp(beta0 - exp(beta0)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
     W_lt <- s_1lt/s_0lt
     
     # Density functions
+    lambda_ij_0 <- lambda0_j*exp(z_ij*beta0)
+    lambda_il_0 <- lambda0_l*exp(z_il*beta0)
     lambda_ij <- lambda0_j*exp(z_ij*betaA)
     lambda_il <- lambda0_l*exp(z_il*betaA)
     
@@ -558,18 +498,14 @@ shinyServer(function(input, output,session) {
     if(j != l){
       survivor_jl <- exp( -( (lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b) )^theta_b )
       
-      
       survivor_div <- -(1/t)*(lambda_il*t)^(1/theta_b)*survivor_jl*((lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b))^(theta_b - 1)
-      #-lambda_il*survivor_jl*(lambda_il*t)^((1/theta_b)-1)*( (lambda_ij*s)^(1/theta_b) + (lambda_il*t)^(1/theta_b) )^(theta_b - 1)
       
     }
     else{
       # same period #
       survivor_jl <- exp( -( (lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w) )^theta_w )
       
-      
       survivor_div <- -(1/t)*(lambda_il*t)^(1/theta_w)*survivor_jl*((lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w))^(theta_w - 1)
-      #-lambda_il*survivor_jl*(lambda_il*t)^((1/theta_w)-1)*( (lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w) )^(theta_w - 1)
       
     }
     
@@ -577,7 +513,6 @@ shinyServer(function(input, output,session) {
     q3 <-  G_st*(z_ij-W_js)*(z_il-W_lt)*(-survivor_div)*lambda_ij
     
     return(q3)
-    
     
   } 
   
@@ -591,16 +526,18 @@ shinyServer(function(input, output,session) {
     
     # Ws
     pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
-    s_1js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s)
-    s_0js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
+    s_1js <- pi_b_j * exp(beta0 - exp(beta0)*lambda0_j*s)
+    s_0js <- pi_b_j * exp(beta0 - exp(beta0)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
     W_js <- s_1js/s_0js
     
     pi_b_l <- sum(desmat_prob[,l])#sum(pi_b[1:l])
-    s_1lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t)
-    s_0lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
+    s_1lt <- pi_b_l * exp(beta0 - exp(beta0)*lambda0_l*t)
+    s_0lt <- pi_b_l * exp(beta0 - exp(beta0)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
     W_lt <- s_1lt/s_0lt
     
     # Density functions
+    lambda_ij_0 <- lambda0_j*exp(z_ij*beta0)
+    lambda_il_0 <- lambda0_l*exp(z_il*beta0)
     lambda_ij <- lambda0_j*exp(z_ij*betaA)
     lambda_il <- lambda0_l*exp(z_il*betaA)
     
@@ -617,36 +554,28 @@ shinyServer(function(input, output,session) {
     }
     
     # Final output
-    # pi_b_min <- ifelse( j < l, sum(pi_b[1:(j+1)]), sum(pi_b[1:(l+1)]) )
-    # pi_b_max <- ifelse( j > l, sum(pi_b[1:j]), sum(pi_b[1:l]) )
-    # pi_b_mid <- ifelse( j > l, sum(pi_b[(l+1):j]), sum(pi_b[(j+1):j]) )
-    
     q4 <-  G_st*(z_ij-W_js)*(z_il-W_lt)*survivor_jl*lambda_ij*lambda_il
-    
     
     return(q4)
     
   }
   
-  V_0_score <- function(s, beta0, betaA, z_ij, j, lambda0, tau, desmat_prob){#pi_b){
+  V_0_score <- function(s, beta0, betaA, z_ij, j, lambda0, tau, desmat_prob){
     
     # censoring distribution
     G_s <- 1-s/tau
     
     # W_js (ratio of s_1j/s_0j)
     pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
-    s_1j <- s_2j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s)
-    s_0j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
-    #W_js <- s_1j/s_0j
-    #W_js2 <- (s_1j^2)/(s_0j^2)
+    s_1j <- s_2j <- pi_b_j * exp(beta0 - exp(beta0)*lambda0*s)
+    s_0j <- pi_b_j * exp(beta0 - exp(beta0)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
     
     # Density functions (negative derivative of the survival function)
-    f_ij_s <- lambda0*exp(z_ij*betaA)*exp(-lambda0*s*exp(z_ij*betaA))
+    f_ij_s <- lambda0*exp(z_ij*beta0)*exp(-lambda0*s*exp(z_ij*betaA))
     
     v <- G_s*((s_2j/s_0j) - (s_1j^2)/(s_0j^2))*f_ij_s#(W_js - W_js2)*f_ij_s
     
     return(v)
-    
     
   }
   
@@ -660,12 +589,12 @@ shinyServer(function(input, output,session) {
     return(Q)
   }
   
-  H0_score <- function(j, beta0, betaA, lambda0, tau,desmat_prob){#pi_b){
+  H0_score <- function(j, beta0, betaA, lambda0, tau,desmat_prob){
     # function that integrates and takes the expectation for the same subject, cluster, period portion of B
     pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     
-    H0 <- pi_b_j*pracma::integral(fun=q_0_score,xmin=0,xmax=tau,beta0=beta0, betaA=betaA, z_ij=1,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob) +#pi_b=pi_b) +
-      (1-pi_b_j)*pracma::integral(fun=q_0_score,xmin=0,xmax=tau, beta0=beta0, betaA=betaA, z_ij=0,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob)#pi_b=pi_b)
+    H0 <- pi_b_j*pracma::integral(fun=q_0_score,xmin=0,xmax=tau,beta0=beta0, betaA=betaA, z_ij=1,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob) +
+      (1-pi_b_j)*pracma::integral(fun=q_0_score,xmin=0,xmax=tau, beta0=beta0, betaA=betaA, z_ij=0,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob)
     
     return(H0)
   }
@@ -699,45 +628,43 @@ shinyServer(function(input, output,session) {
     
     return(H1)
   }
-  H2_score <- function(j, beta0, betaA, lambda0, tau, desmat_prob){#pi_b){
+  H2_score <- function(j, beta0, betaA, lambda0, tau, desmat_prob){
     # function that integrates and takes the expectation of the A components
     
     pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     
-    H2 <- pi_b_j*pracma::integral(fun=V_0_score, xmin=0, xmax=tau, beta0=beta0, betaA=betaA, z_ij=1, j=j, lambda0=lambda0, tau=tau, desmat_prob=desmat_prob) +#pi_b=pi_b) + 
-      (1-pi_b_j)*pracma::integral(fun=V_0_score, xmin=0, xmax=tau, beta0=beta0, betaA=betaA, z_ij=0, j=j, lambda0=lambda0, tau=tau, desmat_prob=desmat_prob)#pi_b=pi_b)
+    H2 <- pi_b_j*pracma::integral(fun=V_0_score, xmin=0, xmax=tau, beta0=beta0, betaA=betaA, z_ij=1, j=j, lambda0=lambda0, tau=tau, desmat_prob=desmat_prob) + 
+      (1-pi_b_j)*pracma::integral(fun=V_0_score, xmin=0, xmax=tau, beta0=beta0, betaA=betaA, z_ij=0, j=j, lambda0=lambda0, tau=tau, desmat_prob=desmat_prob)
     
     return(H2)
   }
   
-  score_exp <- function(s, beta0, betaA, z_ij, j,lambda0, tau,desmat_prob){#pi_b){
+  score_exp <- function(s, beta0, betaA, z_ij, j,lambda0, tau,desmat_prob){
     # censoring distribution
     G_s <- 1-s/tau
     
     # W_js (ratio of s_1j/s_0j)
     pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
-    s_1j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s)
-    s_0j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
+    s_1j <- pi_b_j * exp(beta0 - exp(beta0)*lambda0*s)
+    s_0j <- pi_b_j * exp(beta0 - exp(beta0)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
     W_js <- s_1j/s_0j
     
     # Density functions (negative derivative of the survival function)
     # density on treatment arm # 
-    f_ij_s <- lambda0*exp(z_ij*betaA)*exp(-lambda0*s*exp(z_ij*betaA))
+    f_ij_s <- lambda0*exp(z_ij*beta0)*exp(-lambda0*s*exp(z_ij*betaA))
     
     
     # final output
-    score_exp <- (G_s-f_ij_s)*(z_ij-W_js)#*f_ij_s
-    #pi_b_j*(G_s*(1-W_js)^2*f_ij_s_1) + (1-pi_b_j)*(G_s*(W_js)^2*f_ij_s_0)
-    
+    score_exp <- (G_s-f_ij_s)*(z_ij-W_js)
     return(score_exp)
   }
   
-  H_score <- function(j, beta0, betaA, lambda0, tau,desmat_prob){#pi_b){
+  H_score <- function(j, beta0, betaA, lambda0, tau,desmat_prob){
     # function that integrates and takes the expectation for the same subject, cluster, period portion of B
     pi_b_j <- sum(desmat_prob[,j])#sum(pi_b[1:j])
     
-    H_score <- pi_b_j*pracma::integral(fun=score_exp,xmin=0,xmax=tau,beta0=beta0, betaA=betaA, z_ij=1,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob) +#pi_b=pi_b) +
-      (1-pi_b_j)*pracma::integral(fun=score_exp,xmin=0,xmax=tau, beta0=beta0, betaA=betaA, z_ij=0,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob)#pi_b=pi_b)
+    H_score <- pi_b_j*pracma::integral(fun=score_exp,xmin=0,xmax=tau,beta0=beta0, betaA=betaA, z_ij=1,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob) +
+      (1-pi_b_j)*pracma::integral(fun=score_exp,xmin=0,xmax=tau, beta0=beta0, betaA=betaA, z_ij=0,j=j,lambda0=lambda0, tau=tau,desmat_prob=desmat_prob)
     
     return(H_score)
   }
@@ -748,9 +675,9 @@ shinyServer(function(input, output,session) {
     H1_sum_eq <- H1_sum_uneq <- matrix(NA, nrow=J, ncol=J)
     for(j in seq(J)){
       
-      H0_sum[j] <- H0_score(j=j, beta0=beta0,betaA=betaA, lambda0=lambda0[j], tau=tau, desmat_prob=desmat_prob)#pi_b=pi_b)
-      H2_sum[j] <- H2_score(j=j, beta0=beta0,betaA=betaA, lambda0=lambda0[j], tau=tau, desmat_prob=desmat_prob)#pi_b=pi_b)
-      H_score_sum[j] <- H_score(j=j, beta0=beta0, betaA=betaA, lambda0=lambda0[j], tau=tau, desmat_prob=desmat_prob)#pi_b=pi_b)
+      H0_sum[j] <- H0_score(j=j, beta0=beta0,betaA=betaA, lambda0=lambda0[j], tau=tau, desmat_prob=desmat_prob)
+      H2_sum[j] <- H2_score(j=j, beta0=beta0,betaA=betaA, lambda0=lambda0[j], tau=tau, desmat_prob=desmat_prob)
+      H_score_sum[j] <- H_score(j=j, beta0=beta0, betaA=betaA, lambda0=lambda0[j], tau=tau, desmat_prob=desmat_prob)
       for(l in seq(J)){
         if(j==l){
           H1_sum_eq[j,l] <- H1_score(j=j,l=l, beta0=beta0,betaA=betaA, lambda0_j=lambda0[j], lambda0_l=lambda0[l], tau=tau, desmat_prob=desmat_prob, tau_kw=tau_kw, tau_kb=tau_kb)
@@ -774,15 +701,41 @@ shinyServer(function(input, output,session) {
     score <- m*sum(H_score_sum)
     score2 <- m*sum(tcrossprod(H_score_sum))
     
-    score_var <- sqrt(A)#/sqrt(n)
+    score_var <- sqrt(A)
     
-    return(list(var_beta_sqrt=sqrt(var_beta), var_naive=sqrt(solve(A)),#/sqrt(n),
-                B=sqrt(B), #B_mod=sqrt(B*((n-1)/n)),
+    return(list(var_beta_sqrt=sqrt(var_beta),
+                var_naive=sqrt(solve(A)),
+                B=sqrt(B), 
                 score=score,
-                score2=sqrt(score2), #score2_mod=sqrt(score2*((n-1)/n)),
-                A=score_var#, A_mod=score_var*sqrt((n-1)/n)
-                ))
+                score2=sqrt(score2), 
+                A=score_var))
     
+  }
+  
+  
+  #### APP FUNCTIONS ####
+  designMatrix <- function(design, periods=NULL, clusters=NULL, file=NULL){
+    if(design == "balanced"){
+      sequences <- periods-1
+      
+      if( clusters %% sequences != 0 ){
+        stop("Must have equal number of clusters per sequence for design to be balanaced")
+      }else{
+        
+        W0 <- matrix(0, ncol=periods, nrow=sequences)
+        W0[upper.tri(W0)] <- 1
+        W0[rep(1:nrow(W0), each = (clusters/sequences)),]
+      }
+      
+      
+    }else if(design == "unbalanced"){
+      read.csv(file$datapath, header=FALSE)
+    }
+  }
+  
+  lambdaDET <- function(Cp, pa){#kappa, pa){
+    lambda0 <- (1/Cp)*(-log(pa))#^(1/kappa)
+    return(lambda0)
   }
   
   #### OUTPUT ####
@@ -897,7 +850,7 @@ shinyServer(function(input, output,session) {
   # cv.c <- 0; cv.p <- 0
   
   betaA <- eventReactive(input$submit, {input$beta})
-  # pa <- reactive({input$admin_censor})
+  pa <- eventReactive(input$submit,{input$admin_censor})
   # p0 <- reactive({input$other_censor})
   constant_baseline <- reactive({#eventReactive(input$submit, {
     input$constant_baseline
@@ -908,16 +861,24 @@ shinyServer(function(input, output,session) {
   
   alpha <- eventReactive(input$submit, {input$sig})
   
+  DoF <- eventReactive(input$submit, {
+    if(input$DoF == "n1"){
+      1
+    }else if(input$DoF == "n2"){
+      2
+    }
+  })
+  
   ## reactive variance functions ##
   design_varA <- eventReactive(input$submit, {
     Cp <- 1
     beta0 <- 0
-    
+    lambda0_base <- lambdaDET(Cp, pa())
     
     if(constant_baseline() == "constant"){
-      lambda0 <- 1+0*seq(0,(J_use()-1))
+      lambda0 <- lambda0_base+0*seq(0,(J_use()-1))
     }else{
-      lambda0 <- 1+baseline_change()*seq(0,(J_use()-1))
+      lambda0 <- lambda0_base+baseline_change()*seq(0,(J_use()-1))
     }
     
     
@@ -935,11 +896,12 @@ shinyServer(function(input, output,session) {
   design_varA_score <- eventReactive(input$submit, {#reactive({
     Cp <- 1
     beta0 <- 0
+    lambda0_base <- lambdaDET(Cp, pa())
     
     if(constant_baseline() == "constant"){
-      lambda0 <- 1+0*seq(0,(J_use()-1))
+      lambda0 <- lambda0_base+0*seq(0,(J_use()-1))
     }else{
-      lambda0 <- 1+baseline_change()*seq(0,(J_use()-1))
+      lambda0 <- lambda0_base+baseline_change()*seq(0,(J_use()-1))
     }
     
     #k <- rep( seq(2,J()), (n()/(J()-1)) )
@@ -954,11 +916,12 @@ shinyServer(function(input, output,session) {
   design_var0_score <- eventReactive(input$submit, {#reactive({
     Cp <- 1
     beta0 <- 0
+    lambda0_base <- lambdaDET(Cp, pa())
     
     if(constant_baseline() == "constant"){
-      lambda0 <- 1+0*seq(0,(J_use()-1))
+      lambda0 <- lambda0_base+0*seq(0,(J_use()-1))
     }else{
-      lambda0 <- 1+baseline_change()*seq(0,(J_use()-1))
+      lambda0 <- lambda0_base+baseline_change()*seq(0,(J_use()-1))
     }
     
     #k <- rep( seq(2,J()), (n()/(J()-1)) )
@@ -992,7 +955,8 @@ shinyServer(function(input, output,session) {
     if(n_power()=="power"){
       
       # calculate predicted power based on your sandwich variance and t test #
-      design_power_t <- pt((abs(betaA())/(design_varA()$var_beta_sqrt/sqrt(n_use())) - qt((1-alpha()/2), n_use()-1)), n_use()-1)
+      
+      design_power_t <- pt((abs(betaA())/(design_varA()$var_beta_sqrt/sqrt(n_use())) - qt((1-alpha()/2), n_use()-DoF())), n_use()-DoF())
       
       # output results #
       paste0(round(design_power_t*100, 2), "% under the Wald t-testing paradigm,")

@@ -5,7 +5,7 @@ account: mary-ryan
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 8406676
-bundleId: 8041838
+bundleId: 8838900
 url: https://mary-ryan.shinyapps.io/survival-SWD-app/
 asMultiple: FALSE
 asStatic: FALSE
