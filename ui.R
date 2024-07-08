@@ -147,6 +147,14 @@ shinyUI(fluidPage(
       #                step=0.01)
       # ),
       
+      # admin censoring #
+      numericInput("admin_censor",
+                   "Administrative censoring (proportion)",
+                   min=0,
+                   max=1,
+                   value=0,
+                   step=0.01),
+      
       # baseline hazard #
       radioButtons("constant_baseline",
                    "Baseline hazard:",
@@ -163,13 +171,6 @@ shinyUI(fluidPage(
                      max=99999,
                      value=0)
       ),
-      # censoring #
-      # numericInput("admin_censor",
-      #              "Administrative censoring (proportion)",
-      #              min=0,
-      #              max=1,
-      #              value=0,
-      #              step=0.01),
       # numericInput("other_censor",
       #              "Other censoring (proportion)",
       #              min=0,
@@ -180,6 +181,16 @@ shinyUI(fluidPage(
       numericInput(inputId="sig",
                    label="Significance level",
                    0.05, min=0.000001, max=1, step=0.001),
+      
+      # degrees of freedom #
+      conditionalPanel(
+        condition = "input.n_power == 'power'",
+        radioButtons("DoF",
+                     "Degrees of Freedom:",
+                     c("(n-1)"="n1",
+                       "(n-2)"="n2")
+                     )
+      ),
 
       ## loading message when the app is calculating ##
       tags$head(tags$style(type="text/css", "

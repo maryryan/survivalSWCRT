@@ -225,7 +225,11 @@ CoxSurBCV <- function(Y,Delta,X,period,ID){
         nom0_temp[k,i] <- sum(as.matrix(tempk0*epsilon0_c)%*%repmat(1,ny,1))
         
         # preparation for residual based correction of B matrix - none of this concerns the naive
+        # tempr1 <- zeros(1,nbeta)
         for (s in 1:nbeta){
+          # tempdd <- (repmat(X_c[,s,drop=FALSE],1,ny)-repmat(S1beta[s,,drop=FALSE]/t(S0beta),ny_c,1))*ylxb_c
+          # tempr1[1,s] <- sum(as.matrix(tempk*tempdd)%*%repmat(1,ny,1))
+          
           # true Omega
           Omega_m[k,s,i] <- sum(Delta_c*(S2beta[IDind[i,]==1,,k,s]/S0beta_c-S1beta_c[k,]*S1beta_c[s,]/S0beta_c^2)) -
             sum((repmat(S2beta[,,k,s]/S0beta-S1beta[k,]*S1beta[s,]/S0beta^2,ny_c,1)*ylxb_c)%*%repmat(1,ny,1)) +
@@ -236,16 +240,21 @@ CoxSurBCV <- function(Y,Delta,X,period,ID){
             sum((tempk0*repmat(X_c[,s,drop=FALSE],1,ny)*ylxb0_c)%*%repmat(1,ny,1))
         }
         
+        # components residual based correction
+        # nomRB1 <- (diag(nbeta)[k,]+tempr1%*%naive)%*%nom[,i]
+        # nomRB2 <- sum(as.matrix(tempk*IndYY_c*exp(Xbeta_c)/repmat(S0beta,ny_c,1))%*%epsilon_c_all)
+        # nomRB[k,i] <- nomRB1+nomRB2
       }
       
       # components for MD type correction
       nomMD_temp[,i] <- Ustar%*%solve(Ustar-Omega_m[,,i])%*%nom_temp[,i]
-
+      #nomRBMD[,i] <- Ustar%*%solve(Ustar-Omega_m[,,i])%*%nomRB[,i]
       # components for FG type correction
       Hi <- zeros(nbeta,nbeta)
       tempov <- Omega_m[,,i]%*%naive
       diag(Hi) <- 1/sqrt(1-pmin(0.75,c(diag(tempov))))
       nomFG_temp[,i] <- Hi%*%nom_temp[,i]
+      # nomRBFG[,i] <- Hi%*%nomRB[,i]
     }
     
     # check model-based variance (should be same as naive)
@@ -254,6 +263,9 @@ CoxSurBCV <- function(Y,Delta,X,period,ID){
     Ustar0_m_temp <- apply(Omega0_m,c(1,2),sum)
     Ustar0_m <- Ustar0_m+Ustar0_m_temp
     
+    # should we be adding these up and them tcrossprod-ing the sum after the loop?
+    #UUtran_temp <- tcrossprod(nom)
+    #UUtran <- UUtran + UUtran_temp
     nom <- nom + nom_temp #summing up results from each period
     nom0 <- nom0 + nom0_temp
     nom2_temp <- tcrossprod(nom_temp)
@@ -261,8 +273,15 @@ CoxSurBCV <- function(Y,Delta,X,period,ID){
     nom2 <- nom2 + nom2_temp
     nom02 <- nom02 + nom02_temp
     
+    #UUMD_temp <- tcrossprod(nomMD)
+    #UUMD <- UUMD + UUMD_temp
     nomMD <- nomMD + nomMD_temp
     
+    #UUKC_temp <- tcrossprod(nomMD,nom)
+    #UUKC <- UUKC + UUKC_temp
+    
+    #UUFG_temp <- tcrossprod(nomFG)
+    #UUFG <- UUFG + UUFG_temp
     nomFG <- nomFG + nomFG_temp
   }
   #naive <- solve(Ustar)
@@ -274,18 +293,39 @@ CoxSurBCV <- function(Y,Delta,X,period,ID){
   robust <- naive%*%UUtran%*%naive
   
   UUtran0 <- tcrossprod(nom0) #this is B
+  #robust0 <- naive0%*%UUtran%*%naive0
+  
+  # variance estimator of residual based correction
+  # UURB <- tcrossprod(nomRB)
+  # varRB <- naive%*%UURB%*%naive
   
   # variance estimator of MD type
   UUMD <- tcrossprod(nomMD)
   varMD <- naive%*%UUMD%*%naive
   
+  # UURBMD <- tcrossprod(nomRBMD)
+  # varRBMD <- naive%*%UURBMD%*%naive
+  
   # variance estimator of KC type
   UUKC <- tcrossprod(nomMD,nom)
   varKC <- naive%*%(UUKC+t(UUKC))%*%naive/2
   
+  # UURBKC <- tcrossprod(nomRBMD,nomRB)
+  # varRBKC <- naive%*%(UURBKC+t(UURBKC))%*%naive/2
+  
   # variance estimator of FG type
   UUFG <- tcrossprod(nomFG)
   varFG <- naive%*%UUFG%*%naive
+  
+  # UURBFG <- tcrossprod(nomRBFG)
+  # varRBFG <- naive%*%UURBFG%*%naive
+  
+  # variance estimator of MBN type
+  # varMBN <- (ny-1)*n/((ny-nbeta)*(n-1))*robust+
+  #   (min(0.5, nbeta/(n-nbeta))*max(1,sum(diag(naive%*%((ny-1)*n/((ny-nbeta)*(n-1))*UUtran)))/nbeta))*naive
+  # 
+  # varRBMBN <- (ny-1)*n/((ny-nbeta)*(n-1))*varRB+
+  #   (min(0.5, nbeta/(n-nbeta))*max(1,sum(diag(naive%*%((ny-1)*n/((ny-nbeta)*(n-1))*UURB)))/nbeta))*naive
   
   #############################################
   # Output
@@ -295,12 +335,20 @@ CoxSurBCV <- function(Y,Delta,X,period,ID){
   # varMD: bias-corrected sandwich var due to MD type
   # varKC: bias-corrected sandwich var due to KC type
   # varFG: bias-corrected sandwich var due to FG type
+  # varMBN: bias-corrected sandwich var due to MBN type
   #############################################
   bSE <- sqrt(diag(naive))
   bSEBC0 <- sqrt(diag(robust))
+  #bSERB <- sqrt(diag(varRB))
   bSEMD <- sqrt(diag(varMD))
   bSEKC <- sqrt(diag(varKC))
   bSEFG <- sqrt(diag(varFG))
+  #bSEMBN <- sqrt(diag(varMBN))
+  
+  # bSERBMD <- sqrt(diag(varRBMD))
+  # bSERBKC <- sqrt(diag(varRBKC))
+  # bSERBFG <- sqrt(diag(varRBFG))
+  # bSERBMBN <- sqrt(diag(varRBMBN))
   
   outbeta <- cbind(summary(test.cox_cluster)$coefficients,
                    bSE,bSEBC0,#bSERB,
@@ -311,11 +359,12 @@ CoxSurBCV <- function(Y,Delta,X,period,ID){
                    #bSERBMD,bSERBKC,bSERBFG,bSERBMBN
   )
   colnames(outbeta) <- c("coef","exp(coef)","se(coef)","robust se","z","Pr(>|z|)",
-                         "MB-stderr","BC0-stderr",
+                         "MB-stderr","BC0-stderr",#"score",#"RB-stderr",
                          "MD-stderr","KC-stderr","FG-stderr",
                          "score0", "BC0-B0",
                          "nom0","score02","nom02",
-                         "MD-B","KC-B","FG-B"
+                         "MD-B","KC-B","FG-B"#MBN-stderr",
+                         #"RBMD-stderr","RBKC-stderr","RBFG-stderr","RBMBN-stderr"
   )
   
   return(list(outbeta=outbeta))
@@ -334,6 +383,11 @@ surGENSW<-function(n, mv, lambda0, beta, tau_b, tau_w, p.max, k){
   # p.max: maximum number of periods observed
   
   y <- NULL
+  
+  # marginal survival function
+  #S <- function(lambda0, kappa, zbeta, t){
+  #  return(exp(-exp(zbeta)*(lambda0*t)^kappa))
+  #}
   
   # inverse of marginal survival function: inverse Exponential distribution
   t <- function(lambda0, zbeta, S){
@@ -363,8 +417,8 @@ surGENSW<-function(n, mv, lambda0, beta, tau_b, tau_w, p.max, k){
     # theta1: child-level correlation parameter; must be > theta0
     theta1 <- theta_b/theta_w
     
-    stable0_gamma <- ( cos(pi/(theta0*2)) )
-    stable01_gamma <- ( cos(pi/(theta1*2)) )
+    stable0_gamma <- ( cos(pi/(theta0*2)) )#^theta0
+    stable01_gamma <- ( cos(pi/(theta1*2)) )#^theta1
     
     for(i in seq(n)){
       V0 <- V01 <- Z <- U <- T_ijk_clu <- NULL
@@ -381,15 +435,19 @@ surGENSW<-function(n, mv, lambda0, beta, tau_b, tau_w, p.max, k){
         
         if(length(m)==1){
           # if there's a constant cluster-period size across clusters & periods #
+          #Z <- matrix(NA, nrow=m, ncol=p.max)
           for(p in seq(p.max)){
             Z[[p]] <- runif(m, 0, 1)
+            #Z <- c(Z, Z_temp)
             
           }
           
         }else if( length(m)==n ){
           # if cluster-period size differs by cluster but not period #
+          #Z <- matrix(NA, nrow=m[i], ncol=p.max)
           for(p in seq(p.max)){
             Z[[p]] <- runif(m[i], 0, 1)
+            #Z <- c(Z, Z_temp)
             
           }
           
@@ -397,6 +455,7 @@ surGENSW<-function(n, mv, lambda0, beta, tau_b, tau_w, p.max, k){
           # if cluster-period size differs by period but not cluster #
           for(p in seq(p.max)){
             Z[[p]] <- runif(m[p], 0, 1)
+            #Z <- c(Z, Z_temp)
           }
           
         }
@@ -405,6 +464,7 @@ surGENSW<-function(n, mv, lambda0, beta, tau_b, tau_w, p.max, k){
         # cluster-period size differs by cluster and period #
         for(p in seq(p.max)){
           Z[[p]] <- runif(sum(m[i,p]), 0, 1)
+          #Z <- c(Z, Z_temp)
           
         }
       }
@@ -430,11 +490,14 @@ surGENSW<-function(n, mv, lambda0, beta, tau_b, tau_w, p.max, k){
           
         }else if( length(m) == p.max ){
           # if cluster-period size differs by period but not cluster #
+          #lambda_denom <- NULL
           for(j in seq(p.max)){
             T_ijk_clu_temp <- (1/rep(lambda_ij[j], m[j])) * ( -log(U[[j]])/V0 )^(1/theta0)
             T_ijk_clu <- c(T_ijk_clu, T_ijk_clu_temp)
+            # temp <- rep(lambda_ij[j], m[j])
+            # lambda_denom <- c(lambda_denom, temp)
           }
-          
+          #T_ijk_clu <- (1/lambda_denom) * ( -log(U)/V0 )^(1/theta0)
         }
         
         
@@ -461,20 +524,28 @@ surGENSW<-function(n, mv, lambda0, beta, tau_b, tau_w, p.max, k){
             
           }else if( length(m) == p.max ){
             # if cluster-period size differs by period but not cluster #
+            #lambda_denom <- NULL
             for(j in seq(p.max)){
               T_ijk_clu_temp <- (1/rep(lambda_ij[i,j], m[j])) * ( -log(U[[j]])/V0 )^(1/theta0)
               T_ijk_clu <- c(T_ijk_clu, T_ijk_clu_temp)
+              
+              # temp <- rep(lambda_ij[i,j], m[j])
+              # lambda_denom <- c(lambda_denom, temp)
             }
-            
+            #T_ijk_clu <- (1/lambda_denom) * ( -log(U)/V0 )^(1/theta0)
           }
           
         }else{
           # cluster-period size differs by cluster and period #
+          #lambda_denom <- NULL
           for(j in seq(p.max)){
             T_ijk_clu_temp <- (1/rep(lambda_ij[i,j], m[i,j])) * ( -log(U[[p]])/V0 )^(1/theta0)
             T_ijk_clu <- c(T_ijk_clu, T_ijk_clu_temp)
+            
+            # temp <- rep(lambda_ij[i,j], m[i,j])
+            # lambda_denom <- c(lambda_denom, temp)
           }
-          
+          # T_ijk_clu <- (1/lambda_denom) * ( -log(U)/V0 )^(1/theta0)
         }
       }
       
@@ -492,22 +563,28 @@ surGENSW<-function(n, mv, lambda0, beta, tau_b, tau_w, p.max, k){
   # generate y for n clusters
   for (i in 1:n){
     # create treatment effect sequence for entire cluster, across time periods #
-    zbeta <- c(0,beta)
+    zbeta <- c(0,beta)#rep(0,(k[i]-1)), rep(beta,(max(k)-k[i]+1)))
     lambda_ij <- rep(NA, p.max)
     for(p in seq(p.max)){
       # if we're in the treatment period trt effect is beta[2], otherwise its beta[1] (null)
       zbeta.p <- ifelse(p >= k[i], zbeta[2], zbeta[1])
       lambda_ij[p] <- lambda0[p]*exp(zbeta.p)
     }
-    
-    yi <- rnested_gumbel(n=1, p.max=p.max, m=mv[i,], tau_b=tau_b, tau_w=tau_w, lambda_ij=lambda_ij)
+    # # if 
+    # if (k[i] == 0){
+    #   zbeta <- 0
+    # } else{
+    #   # if in the 2nd half of clusters, assign to treatment w/ effect beta #
+    #   zbeta <- beta}
+    yi <- rnested_gumbel(n=1, p.max=p.max, m=mv[i,], tau_b=tau_b, tau_w=tau_w, lambda_ij=lambda_ij) #yclu(mv[i,], lambda0, kappa, zbeta, theta,k[i], p.max)
     y <- c(y, yi) 
   }
   
   return(y)
 }
 
-surSIMULATESW <- function(n, J, cv.c, cv.p, lambda0, beta, pa, p0, tau_b, tau_w, Cp, nrep, k, p.max, strat=TRUE, FE=FALSE){
+surSIMULATESW <- function(n, J, cv.c, cv.p, beta, lambda0_c=0,
+                          pa, p0, tau_b, tau_w, Cp, nrep, k, p.max, strat=TRUE, FE=FALSE){
   
   # INPUT
   # n: Number of clusters
@@ -529,6 +606,22 @@ surSIMULATESW <- function(n, J, cv.c, cv.p, lambda0, beta, pa, p0, tau_b, tau_w,
   
   require(survival)
   
+  # Function to calculate lambda0 based on the desired administrative censoring rate
+  #                                        for the control group pa
+  lambdaDET <- function(Cp, pa){#kappa, pa){
+    lambda0 <- (1/Cp)*(-log(pa))#^(1/kappa)
+    return(lambda0)
+  }
+  
+  # Function to calculate theta based on Kendall’s tau
+  # thetaDET <- function(tau){
+  #   theta <- 0.5*(1/tau - 1)
+  #   return(theta)
+  # }
+  
+  lambda0 <- lambdaDET(Cp, pa)
+  lambda0 <- lambda0+lambda0_c*seq(0,(p.max-1))
+  #theta <- thetaDET(tau)
   results <- NULL
   
   mv <- matrix(NA, ncol=p.max,nrow=n)
@@ -580,7 +673,8 @@ surSIMULATESW <- function(n, J, cv.c, cv.p, lambda0, beta, pa, p0, tau_b, tau_w,
       
     }
     
-    mt <- sum(mv)# total observations
+    #mz <- c(sum(mv[1:(floor(n/2))]), sum(mv[(floor(n/2)+1):n])) # subjects in each arm
+    mt <- sum(mv)#sum(mv*max(k)) # total observations
     Z <- NULL
     for(j in 1:n){
       # treatment indicator for cluster across time periods #
@@ -594,6 +688,7 @@ surSIMULATESW <- function(n, J, cv.c, cv.p, lambda0, beta, pa, p0, tau_b, tau_w,
       
       
     }
+    #Z <- rep(c(0, 1), mz) 
     
     # Generate failure times
     set.seed(i)
@@ -602,11 +697,11 @@ surSIMULATESW <- function(n, J, cv.c, cv.p, lambda0, beta, pa, p0, tau_b, tau_w,
     # Generate censoring times
     # if admin and net censoring rates are equal #
     if (p0 == pa){
-      c <- rep(1, mt)
+      c <- rep(1, mt) #net censoring time is same as admin censoring time
     } else{
       # if admin and net censoring rates are not equal #
       set.seed(i)
-      c <- runif(mt)
+      c <- runif(mt,0,1) #randomly generate net censoring time from uniform to have some people censored before admin censoring time
     }
     
     # Generate censoring indicator and censored event times
@@ -616,6 +711,8 @@ surSIMULATESW <- function(n, J, cv.c, cv.p, lambda0, beta, pa, p0, tau_b, tau_w,
     # if failure greater than 1, status == 0 (admin censoring) #
     status[y > 1] <- 0
     # if y < 1 & < c, status == 1 #
+    admin_censor <- mean(status==0, na.rm=T)
+    random_censor <- mean(status==2, na.rm=T)
     
     times <- y
     # if failure time greater than censoring time, fill censoring time #
@@ -627,6 +724,8 @@ surSIMULATESW <- function(n, J, cv.c, cv.p, lambda0, beta, pa, p0, tau_b, tau_w,
     status[status == 2] <- 0
     
     ctrl <- status[Z == 0]
+    net_censor <- mean(status==0, na.rm=T)
+    net_censor2 <- 1-mean(status, na.rm=T)
     
     # Cox model
     if(strat==TRUE){
@@ -647,8 +746,18 @@ surSIMULATESW <- function(n, J, cv.c, cv.p, lambda0, beta, pa, p0, tau_b, tau_w,
     }
     
     BC_results <- CoxSurBCV(times,status,Z,period,id)
-   
-    results <- rbind(results, c(summary(survival)$coefficients, n, J, mean(mv), beta, tau_b, tau_w, 1-mean(ctrl), BC_results$outbeta))
+    
+    # testStat_naive <- (coef-beta)/summary(survival)$coefficients[3]
+    # testStat_robust <- (coef-beta)/summary(survival)$coefficients[4]
+    # testStat_MD <- (coef-beta)/BC_results[9]
+    # testStat_KC <- (coef-beta)/BC_results[10]
+    # testStat_FG <- (coef-beta)/BC_results[11]
+    # 
+    # testStat_results <- c(testStat_naive, testStat_robust,
+    #                       testStat_MD, testStat_KC, testStat_FG)
+    
+    results <- rbind(results, c(summary(survival)$coefficients, n, J, mean(mv), beta, tau_b, tau_w, 1-mean(ctrl), BC_results$outbeta, admin_censor, random_censor, net_censor, net_censor2))#, testStat_results)
+    
     if( i %in% c(nrep*seq(0.1,1,0.1)) ) print(paste0(Sys.time(), ": ", (i/nrep)*100, "% done"))
     
   }#end nrep
@@ -656,11 +765,13 @@ surSIMULATESW <- function(n, J, cv.c, cv.p, lambda0, beta, pa, p0, tau_b, tau_w,
                          "z", "Pr(>|z|)",
                          "n", "J", "empirical J", "beta", "tau_b", "tau_w", "empirical p0",
                          "coef","exp(coef)","se(coef)","robust se","z","Pr(>|z|)",
-                         "MB-stderr","BC0-stderr",
+                         "MB-stderr","BC0-stderr",#"score",#"RB-stderr",
                          "MD-stderr","KC-stderr","FG-stderr",
                          "score0", "BC0-B0",
                          "nom0","score02","nom02",
-                         "MD-B","KC-B","FG-B"
+                         "MD-B","KC-B","FG-B",#MBN-stderr",
+                         "empirical_admin", "random_censor","empirical_net","empirical_net2"
+                         #"RBMD-stderr","RBKC-stderr","RBFG-stderr","RBMBN-stderr"
   )
   
   if (beta == 0){
@@ -668,8 +779,10 @@ surSIMULATESW <- function(n, J, cv.c, cv.p, lambda0, beta, pa, p0, tau_b, tau_w,
   } else{
     name <- "Power"}
   cv.c_name <- cv.c*10
+  #save(results, file = paste0(name, "_beta_", cv.c_name, ".RData"))
   return(results)
 }
+
 
 q_0 <- function(s, beta, z_ij, j,lambda0, tau,pi_b){
   # censoring distribution
@@ -688,7 +801,7 @@ q_0 <- function(s, beta, z_ij, j,lambda0, tau,pi_b){
   
   # final output
   q0 <- G_s*(z_ij-W_js)^2*f_ij_s
-
+  
   return(q0)
 }
 
@@ -1005,13 +1118,13 @@ q_0_score <- function(s, beta0, betaA, z_ij, j,lambda0, tau,pi_b){
   
   # W_js (ratio of s_1j/s_0j)
   pi_b_j <- sum(pi_b[1:j])
-  s_1j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s)
-  s_0j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
+  s_1j <- pi_b_j * exp(beta0 - exp(beta0)*lambda0*s)
+  s_0j <- pi_b_j * exp(beta0 - exp(beta0)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
   W_js <- s_1j/s_0j
   
   # Density functions (negative derivative of the survival function)
   # density on treatment arm # 
-  f_ij_s <- lambda0*exp(z_ij*betaA)*exp(-lambda0*s*exp(z_ij*betaA))
+  f_ij_s <- lambda0*exp(z_ij*beta0)*exp(-lambda0*s*exp(z_ij*betaA))
   
   # final output
   q0 <- G_s*(z_ij-W_js)^2*f_ij_s
@@ -1030,17 +1143,19 @@ q_1_score <- function(s, t, beta0, betaA, z_ij, z_il, j,l,lambda0_j, lambda0_l, 
   
   # Ws
   pi_b_j <- sum(pi_b[1:j])
-  s_1js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s)
-  s_0js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
+  s_1js <- pi_b_j * exp(beta0 - exp(beta0)*lambda0_j*s)
+  s_0js <- pi_b_j * exp(beta0 - exp(beta0)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
   W_js <- s_1js/s_0js
   
   pi_b_l <- sum(pi_b[1:l])
-  s_1lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t)
-  s_0lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
+  s_1lt <- pi_b_l * exp(beta0 - exp(beta0)*lambda0_l*t)
+  s_0lt <- pi_b_l * exp(beta0 - exp(beta0)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
   W_lt <- s_1lt/s_0lt
   
   # Density functions
   # these will be the same if j == l 
+  lambda_ij_0 <- lambda0_j*exp(z_ij*beta0)
+  lambda_il_0 <- lambda0_l*exp(z_il*beta0)
   lambda_ij <- lambda0_j*exp(z_ij*betaA)
   lambda_il <- lambda0_l*exp(z_il*betaA)
   
@@ -1055,7 +1170,7 @@ q_1_score <- function(s, t, beta0, betaA, z_ij, z_il, j,l,lambda0_j, lambda0_l, 
     survivor_jl <- exp( -( (lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w) )^theta_w )
     
     f_ijl_st <- lambda_ij*lambda_il*survivor_jl*(lambda_ij*s)^((1/theta_w)-1)*(lambda_il*t)^((1/theta_w)-1)*( (lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w) )^(2*theta_w-2)*( 1+((1/theta_w)-1)*((lambda_ij*s)^(1/theta_w) + (lambda_il*t)^(1/theta_w))^(-theta_w) )
-      }
+  }
   
   q1 <- G_st*(z_ij - W_js)*(z_il - W_lt)*f_ijl_st
   
@@ -1074,16 +1189,18 @@ q_2_score <- function(s, t, beta0, betaA, z_ij, z_il, j,l,lambda0_j, lambda0_l, 
   
   # Ws
   pi_b_j <- sum(pi_b[1:j])
-  s_1js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s)
-  s_0js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
+  s_1js <- pi_b_j * exp(beta0 - exp(beta0)*lambda0_j*s)
+  s_0js <- pi_b_j * exp(beta0 - exp(beta0)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
   W_js <- s_1js/s_0js
   
   pi_b_l <- sum(pi_b[1:l])
-  s_1lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t)
-  s_0lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
+  s_1lt <- pi_b_l * exp(beta0 - exp(beta0)*lambda0_l*t)
+  s_0lt <- pi_b_l * exp(beta0 - exp(beta0)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
   W_lt <- s_1lt/s_0lt
   
   # Density functions
+  lambda_ij_0 <- lambda0_j*exp(z_ij*beta0)
+  lambda_il_0 <- lambda0_l*exp(z_il*beta0)
   lambda_ij <- lambda0_j*exp(z_ij*betaA)
   lambda_il <- lambda0_l*exp(z_il*betaA)
   
@@ -1119,16 +1236,18 @@ q_3_score <- function(s, t, beta0, betaA, z_ij, z_il, j ,l, lambda0_j, lambda0_l
   
   # Ws
   pi_b_j <- sum(pi_b[1:j])
-  s_1js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s)
-  s_0js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
+  s_1js <- pi_b_j * exp(beta0 - exp(beta0)*lambda0_j*s)
+  s_0js <- pi_b_j * exp(beta0 - exp(beta0)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
   W_js <- s_1js/s_0js
   
   pi_b_l <- sum(pi_b[1:l])
-  s_1lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t)
-  s_0lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
+  s_1lt <- pi_b_l * exp(beta0 - exp(beta0)*lambda0_l*t)
+  s_0lt <- pi_b_l * exp(beta0 - exp(beta0)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
   W_lt <- s_1lt/s_0lt
   
   # Density functions
+  lambda_ij_0 <- lambda0_j*exp(z_ij*beta0)
+  lambda_il_0 <- lambda0_l*exp(z_il*beta0)
   lambda_ij <- lambda0_j*exp(z_ij*betaA)
   lambda_il <- lambda0_l*exp(z_il*betaA)
   
@@ -1165,16 +1284,18 @@ q_4_score <- function(s,t, beta0, betaA, z_ij, z_il, j, l, lambda0_j, lambda0_l,
   
   # Ws
   pi_b_j <- sum(pi_b[1:j])
-  s_1js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s)
-  s_0js <- pi_b_j * exp(beta0 - exp(betaA)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
+  s_1js <- pi_b_j * exp(beta0 - exp(beta0)*lambda0_j*s)
+  s_0js <- pi_b_j * exp(beta0 - exp(beta0)*lambda0_j*s) + (1-pi_b_j)*exp(-lambda0_j*s)
   W_js <- s_1js/s_0js
   
   pi_b_l <- sum(pi_b[1:l])
-  s_1lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t)
-  s_0lt <- pi_b_l * exp(beta0 - exp(betaA)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
+  s_1lt <- pi_b_l * exp(beta0 - exp(beta0)*lambda0_l*t)
+  s_0lt <- pi_b_l * exp(beta0 - exp(beta0)*lambda0_l*t) + (1-pi_b_l)*exp(-lambda0_l*t)
   W_lt <- s_1lt/s_0lt
   
   # Density functions
+  lambda_ij_0 <- lambda0_j*exp(z_ij*beta0)
+  lambda_il_0 <- lambda0_l*exp(z_il*beta0)
   lambda_ij <- lambda0_j*exp(z_ij*betaA)
   lambda_il <- lambda0_l*exp(z_il*betaA)
   
@@ -1204,11 +1325,11 @@ V_0_score <- function(s, beta0, betaA, z_ij, j, lambda0, tau, pi_b){
   
   # W_js (ratio of s_1j/s_0j)
   pi_b_j <- sum(pi_b[1:j])
-  s_1j <- s_2j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s)
-  s_0j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
+  s_1j <- s_2j <- pi_b_j * exp(beta0 - exp(beta0)*lambda0*s)
+  s_0j <- pi_b_j * exp(beta0 - exp(beta0)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
   
   # Density functions (negative derivative of the survival function)
-  f_ij_s <- lambda0*exp(z_ij*betaA)*exp(-lambda0*s*exp(z_ij*betaA))
+  f_ij_s <- lambda0*exp(z_ij*beta0)*exp(-lambda0*s*exp(z_ij*betaA))
   
   v <- G_s*((s_2j/s_0j) - (s_1j^2)/(s_0j^2))*f_ij_s#(W_js - W_js2)*f_ij_s
   
@@ -1282,13 +1403,13 @@ score_exp <- function(s, beta0, betaA, z_ij, j,lambda0, tau,pi_b){
   
   # W_js (ratio of s_1j/s_0j)
   pi_b_j <- sum(pi_b[1:j])
-  s_1j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s)
-  s_0j <- pi_b_j * exp(beta0 - exp(betaA)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
+  s_1j <- pi_b_j * exp(beta0 - exp(beta0)*lambda0*s)
+  s_0j <- pi_b_j * exp(beta0 - exp(beta0)*lambda0*s) + (1-pi_b_j)*exp(-lambda0*s)
   W_js <- s_1j/s_0j
   
   # Density functions (negative derivative of the survival function)
   # density on treatment arm # 
-  f_ij_s <- lambda0*exp(z_ij*betaA)*exp(-lambda0*s*exp(z_ij*betaA))
+  f_ij_s <- lambda0*exp(z_ij*beta0)*exp(-lambda0*s*exp(z_ij*betaA))
   
   
   # final output
@@ -1350,7 +1471,6 @@ sandwich_var_score <- function(m,J, lambda0,tau,pi_b, tau_kw, tau_kb, beta0=beta
 }
 
 
-
 #### SAMPLE SIZE CALCULATION: 80% power, beta=0.4, m=35 ####
 # design parameters #
 m <- 35
@@ -1364,11 +1484,20 @@ betaA <- 0.4
 
 # Maximum censoring time #
 Cp <- 1
+
+# administrative censoring rate #
+pa <- 0.05
+
 # how does the baseline hazard before over time? #
 baseline_constant <- 0.05
 
-lambda0 <- 1+baseline_constant*seq(0,(J-1))
-k <- rep( seq(2,J), (n/(J-1)) )
+lambdaDET <- function(Cp, pa){#kappa, pa){
+  lambda0 <- (1/Cp)*(-log(pa))#^(1/kappa)
+  return(lambda0)
+}
+lambda0_base <- lambdaDET(Cp, pa)
+
+lambda0 <- lambda0_base+baseline_constant*seq(0,(J-1))
 pi_b <- c(0, rep((1/(J-1)), (J-1)))
 
 alpha <- 0.05
@@ -1384,16 +1513,16 @@ n_wald <- ( design_varA$var_beta_sqrt * (z_typeI + z_power) )^2/betaA^2
 design_var0_score <- sandwich_var_score(m=m,J=J, lambda0=lambda0,tau=Cp, pi_b=pi_b, tau_kw=tau_w, tau_kb=tau_b, beta0=beta0, betaA=beta0)
 design_varA_score <- sandwich_var_score(m=m,J=J, lambda0=lambda0,tau=Cp, pi_b=pi_b, tau_kw=tau_w, tau_kb=tau_b, beta0=beta0,betaA=betaA)
 
-n_SM <- ( design_varA_scor$B * (z_typeI + z_power) )^2/abs(design_varA_score$score)^2
+n_SM <- ( design_varA_score$B * (z_typeI + z_power) )^2/abs(design_varA_score$score)^2
 n_Tang <- ( design_varA_score$B * (z_power + z_typeI*(design_var0_score$B/design_varA_score$B)) )^2/abs(design_varA_score$score)^2
 
-#### CATHTAG SENSITIVITY ANALYSIS: n=24, beta=0.4, increasing hazard #### 
+#### CATHTAG SENSITIVITY ANALYSIS: n=18, beta=0.4, increasing hazard #### 
 # design parameters #
 m <- 35
-n <- 24
+n <- 18
 J <- 6
 tau_w <- as.numeric(tau_scenarios[,1])
-tau_b <- as.numeric(tai_scenarios[,2])
+tau_b <- as.numeric(tau_scenarios[,2])
 
 # null and alternatives #
 beta0 <- 0
@@ -1404,11 +1533,17 @@ Cp <- 1
 # how does the baseline hazard before over time? #
 baseline_constant <- 0.05
 
-lambda0 <- 1+baseline_constant*seq(0,(J-1))
+lambdaDET <- function(Cp, pa){#kappa, pa){
+  lambda0 <- (1/Cp)*(-log(pa))#^(1/kappa)
+  return(lambda0)
+}
+lambda0_base <- lambdaDET(Cp, pa)
+
+lambda0 <- lambda0_base+baseline_constant*seq(0,(J-1))
 k <- rep( seq(2,J), (n/(J-1)) )
 pi_b <- c(0, rep((1/(J-1)), (J-1)))
 
-#sensitivity_results <- matrix(NA,ncol=6, nrow=length(tau_w))
+sensitivity_results <- NULL
 
 for(j in seq(length(tau_w))){
 
@@ -1424,7 +1559,9 @@ for(j in seq(length(tau_w))){
   score_power_predict_tang <-  pnorm(abs(design_varA_score$score)/(design_varA_score$B/sqrt(n)) - qnorm(0.975)*(design_var0_score$B/design_varA_score$B))
   score_power_predict_A <-  pnorm(abs(design_varA_score$score)/(design_varA_score$B/sqrt(n)) - qnorm(0.975))
   
-  sensitivity_results <- cbind(n, m, J, baseline_constant, tau_w[j], tau_b[j], tau_b[j]/tau_w[j], design_power_t, score_power_predict_A, score_power_predict_tang)
+  sensitivity_results_temp <- cbind(n, m, J, baseline_constant, tau_w[j], tau_b[j], tau_b[j]/tau_w[j], design_power_t, score_power_predict_A, score_power_predict_tang)
+  sensitivity_results <- rbind(sensitivity_results, sensitivity_results_temp)
+  print(j, " out of ", length(tau_w), " scenarios done")
 }
 
 colnames(sensitivity_results) <- c("n","m","J","baseline_constant","tau_w", "tau_b", "tau_ratio", "T", "S&M Score", "Tang Score")
@@ -1454,7 +1591,7 @@ sensitivity_results %>%
   labs(x=TeX("$\\tau_b/\\tau_w$"),
        y=TeX("$\\tau_w$"),
        fill="Predicted Power")+
-  scale_fill_manual(values=sensitivity_colors)
+  scale_fill_manual(values=sensitivity_colors)+
   theme_minimal()+
   theme(strip.background =element_rect(fill="lightgray"))
 
