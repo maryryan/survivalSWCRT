@@ -188,7 +188,7 @@ for(s in seq(length(simulation_scenarios[[1]]))){
     
     reject <- rep(NA,length(x))
     for(i in seq(length(x))){
-      reject[i] <- ifelse( abs(x[i]) >= qt(0.975, n-1), 1, 0 )
+      reject[i] <- ifelse( abs(x[i]) >= qt(0.975, n-2), 1, 0 )
     }
     return(mean(reject))
   })
@@ -197,7 +197,7 @@ for(s in seq(length(simulation_scenarios[[1]]))){
     
     reject <- rep(NA,length(x))
     for(i in seq(length(x))){
-      reject[i] <- ifelse( abs(x[i]) >= qt(0.975, n-J), 1, 0 )#dof is n-(1+(J-1)) since using period fixed effects
+      reject[i] <- ifelse( abs(x[i]) >= qt(0.975, n-2), 1, 0 )
     }
     return(mean(reject))
   })
@@ -277,7 +277,7 @@ for(s in seq(length(simulation_scenarios[[1]]))){
   t_test_power <- apply(testStat_resultsA,2, function(x){
     reject <- rep(NA,length(x))
     for(i in seq(length(x))){
-      reject[i] <- ifelse( abs(x[i]) >= qt(0.975, n-1), 1, 0 )
+      reject[i] <- ifelse( abs(x[i]) >= qt(0.975, n-2), 1, 0 )
     }
     mean(reject)
     
@@ -286,7 +286,7 @@ for(s in seq(length(simulation_scenarios[[1]]))){
   t_test_gee_power <- apply(testStat_gee_resultsA,2, function(x){
     reject <- rep(NA,length(x))
     for(i in seq(length(x))){
-      reject[i] <- ifelse( abs(x[i]) >= qt(0.975, n-J), 1, 0 )
+      reject[i] <- ifelse( abs(x[i]) >= qt(0.975, n-2), 1, 0 )
     }
     mean(reject)
     
@@ -310,6 +310,40 @@ for(s in seq(length(simulation_scenarios[[1]]))){
 }
 
 #### RESULTS ####
+## type I error ##
+sim_results_null %>% 
+  as.data.frame() %>% 
+  janitor::clean_names() %>% #glimpse()
+  dplyr::select(-c("ase", "ese", "z_type_i_naive","z_type_i_sandwich",
+                   "z_type_i_md","z_type_i_fg","z_type_i_kc",
+                   "emp_coef","emp_naive_se", "bc_md_se", "bc_kc_se", "bc_fg_se",
+                   "test_stat_naive","test_stat_sandwich","test_stat_md",
+                   "test_stat_kc","test_stat_fg","beta0"
+  )) %>% #glimpse()
+  rename(t_type_i_robust = t_type_i_sandwich,
+         gee_t_indep_type_i_robust = t_type_i_gee_indep,
+         gee_t_indep_type_i_md = t_type_i_gee_indep_md,
+         gee_t_indep_type_i_kc = t_type_i_gee_indep_kc,
+         gee_t_indep_type_i_fg = t_type_i_gee_indep_fg,
+         gee_t_exch_type_i_robust = t_type_i_gee_exch,
+         gee_t_exch_type_i_md = t_type_i_gee_exch_md,
+         gee_t_exch_type_i_kc = t_type_i_gee_exch_kc,
+         gee_t_exch_type_i_fg = t_type_i_gee_exch_fg) %>% 
+  pivot_longer(-c("n","m","periods", "tau_w", "tau_b"),
+               names_to="decision_method", values_to = "type_i_error") %>%
+  mutate(decision_distribution=factor(case_when(
+    grepl("^t_", decision_method) ~ "Survival T",
+    grepl("^gee_t_indep", decision_method) ~ "GEE T Indep.",
+    grepl("^gee_t_exch", decision_method) ~ "GEE T Exch."),
+    levels=c("Survival T", "GEE T Indep.", "GEE T Exch.")),
+    decision_method = str_extract(decision_method, "(?<=_)[^_]+(?=$)"),#get the word after the last underscore
+    decision_method = as.factor(decision_method)) %>% 
+  group_by(decision_distribution, decision_method, n,m) %>% 
+  summarize(mean(type_i_error)) %>%
+  arrange(desc(n),m) %>% 
+  print(n=300)
+
+## power ##
 sim_results_alt %>% 
   as.data.frame() %>% 
   janitor::clean_names() %>%
