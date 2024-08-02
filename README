@@ -4,22 +4,22 @@ For questions or comments about the code please contact Mary Ryan at mary.ryan@w
 
 I. List of Supporting Files: These supporting files are sourced in the main files that reproduce the numbers in the submitted manuscript and supporting information.
 
-    2. functions-biometrics.R = file that contains all custom data simulation, variance calculation, power prediction, and sample size calculation functions used throughout the manuscript;
-    3. catheter-scenarios.txt = a text file detailing the simulation parameters for the CATH TAG data example simulation (used with CATHTAG-scenarios-biometrics.R);
-    4. gicc-tau-scenarios-fixed-taub.txt = a text file detailing the parameters for simulations exploring the how within-period g-ICC changes for varied within-period Kendall's tau values given a fixed between-period Kendall's tau value (used with sim-study-gicc-biometrics.R);
-    5. gicc-tau-scenarios-fixed-tauw.txt = a text file detailing the parameters for simulations exploring the how between-period g-ICC changes for varied between-period Kendall's tau values given a fixed within-period Kendall's tau value (used with sim-study-gicc-biometrics.R);
-    6. main_sim_null_scenarios.txt = a text file detailing the parameters for the main article null hypothesis simulations (empirical type I error) for Figure 2 and Web Figures 1-2 (used with sim-study-main-biometrics.R);
-    7. main_sim_alt_scenarios.txt = a text file detailing the parameters for the main article alternative hypothesis simulations (empirical power, predicted power) for Figure 3 and Web Figures 3-7 (used with sim-study-main-biometrics.R);
-    8. rsconnect = folder containing deployment information for the R Shiny application (used with server.R and ui.R);
-    9. survivalSWCRT.Rproj = R Project file.
+    1. functions-biometrics.R = file that contains all custom data simulation, variance calculation, power prediction, and sample size calculation functions used throughout the manuscript;
+    2. catheter-scenarios.txt = a text file detailing the simulation parameters for the CATH TAG data example simulation (used with CATHTAG-scenarios-biometrics.R);
+    3. gicc-tau-scenarios-fixed-taub.txt = a text file detailing the parameters for simulations exploring the how within-period g-ICC changes for varied within-period Kendall's tau values given a fixed between-period Kendall's tau value (used with sim-study-gicc-biometrics.R);
+    4. gicc-tau-scenarios-fixed-tauw.txt = a text file detailing the parameters for simulations exploring the how between-period g-ICC changes for varied between-period Kendall's tau values given a fixed within-period Kendall's tau value (used with sim-study-gicc-biometrics.R);
+    5. main_sim_null_scenarios.txt = a text file detailing the parameters for the main article null hypothesis simulations (empirical type I error) for Figure 2 and Web Figures 1-2 (used with sim-study-main-biometrics.R);
+    6. main_sim_alt_scenarios.txt = a text file detailing the parameters for the main article alternative hypothesis simulations (empirical power, predicted power) for Figure 3 and Web Figures 3-7 (used with sim-study-main-biometrics.R);
+    7. rsconnect = folder containing deployment information for the R Shiny application (used with server.R and ui.R);
+    8. survivalSWCRT.Rproj = R Project file.
 
 II. List of Main Files: These main files are used to reproduce the results in the submitted manuscript and supporting information.
     
-    10. CATHTAG-scenarios-biometrics.R = reproduce simulation results for the CATH TAG data example (used in Figure 4 and Figures F.1-F.3);
-    11. sim-study-gicc-biometrics.R = reproduce simulation results for exploring the how g-ICCs change for varied Kendall's tau values (used in Figure E.1);
-    12. sim-study-main-biometrics.R = reproduce main article simulation results (empirical type I error, empirical power, predicted power) for Figures 2-3 and Web Figures 1-7;
-    13. server.R = server-side file for R Shiny application;
-    14. ui.R = UI-side file for R Shiny application.
+    9. CATHTAG-scenarios-biometrics.R = reproduce simulation results for the CATH TAG data example (used in Figure 4 and Figures F.1-F.3);
+    10. sim-study-gicc-biometrics.R = reproduce simulation results for exploring the how g-ICCs change for varied Kendall's tau values (used in Figure E.1);
+    11. sim-study-main-biometrics.R = reproduce main article simulation results (empirical type I error, empirical power, predicted power) for Figures 2-3 and Web Figures 1-7;
+    12. server.R = server-side file for R Shiny application;
+    13. ui.R = UI-side file for R Shiny application.
 
 III. Software
 
