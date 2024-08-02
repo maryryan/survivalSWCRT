@@ -1,0 +1,34 @@
+The current folder includes R code for reproducing all of the tables, figures, and simulations in the article “Power calculation for cross-sectional stepped wedge cluster randomized trials with a time-to-event endpoint” by Ryan et al. and in the Supporting Information for this article. It also includes a file of the Supporting Information for this article and the accompanying R Shiny application.
+
+For questions or comments about the code please contact Mary Ryan at mary.ryan@wisc.edu.
+
+I. Supporting Information of the Main Article:
+
+    1. survivalSWCRT_supporting_information.pdf = file that includes the Web Appendices, Tables, and Figures referenced in the main article.
+
+II. List of Supporting Files: These supporting files are sourced in the main files that reproduce the numbers in the submitted manuscript and supporting information.
+
+    2. functions-biometrics.R = file that contains all custom data simulation, variance calculation, power prediction, and sample size calculation functions used throughout the manuscript;
+    3. catheter-scenarios.txt = a text file detailing the simulation parameters for the CATH TAG data example simulation (used with CATHTAG-scenarios-biometrics.R);
+    4. gicc-tau-scenarios-fixed-taub.txt = a text file detailing the parameters for simulations exploring the how within-period g-ICC changes for varied within-period Kendall's tau values given a fixed between-period Kendall's tau value (used with sim-study-gicc-biometrics.R);
+    5. gicc-tau-scenarios-fixed-tauw.txt = a text file detailing the parameters for simulations exploring the how between-period g-ICC changes for varied between-period Kendall's tau values given a fixed within-period Kendall's tau value (used with sim-study-gicc-biometrics.R);
+    6. main_sim_null_scenarios.txt = a text file detailing the parameters for the main article null hypothesis simulations (empirical type I error) for Figure 2 and Web Figures 1-2 (used with sim-study-main-biometrics.R);
+    7. main_sim_alt_scenarios.txt = a text file detailing the parameters for the main article alternative hypothesis simulations (empirical power, predicted power) for Figure 3 and Web Figures 3-7 (used with sim-study-main-biometrics.R);
+    8. rsconnect = folder containing deployment information for the R Shiny application (used with server.R and ui.R);
+    9. survivalSWCRT.Rproj = R Project file.
+
+IV. List of Main Files: These main files are used to reproduce the results in the submitted manuscript and supporting information.
+    
+    10. CATHTAG-scenarios-biometrics.R = reproduce simulation results for the CATH TAG data example (used in Figure 4 and Figures F.1-F.3);
+    11. sim-study-gicc-biometrics.R = reproduce simulation results for exploring the how g-ICCs change for varied Kendall's tau values (used in Figure E.1);
+    12. sim-study-main-biometrics.R = reproduce main article simulation results (empirical type I error, empirical power, predicted power) for Figures 2-3 and Web Figures 1-7;
+    13. server.R = server-side file for R Shiny application;
+    14. ui.R = UI-side file for R Shiny application.
+
+V. Software
+
+Analyses were conducted with R, version 4.4.0 (https://www.r-project.org/). The calculations used R packages tidyverse (version 2.0.0), pracma (version 2.4.4), survival (version 3.5-8), stabledist (version 0.7-1), latex2exp (version 0.9.6), and patchwork (version 1.2.0).
+
+VI. R commands for the installation of R packages
+
+install.packages(c("tidyverse", "pracma", "survival", "stabledist", "latex2exp", "patchwork"))
