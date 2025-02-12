@@ -734,6 +734,9 @@ shinyServer(function(input, output,session) {
   }
   
   lambdaDET <- function(Cp, pa){#kappa, pa){
+    if(pa == 0){
+      pa <- 0+.Machine$double.eps
+    }
     lambda0 <- (1/Cp)*(-log(pa))#^(1/kappa)
     return(lambda0)
   }
