@@ -946,11 +946,7 @@ shinyServer(function(input, output,session) {
     
       if(n_power()=="power"){
         
-        # if( balanced()=="balanced" & n_use() %% (J_use()-1) != 0){
-        #   validate("Must have equal number of clusters per sequence for design to be balanaced")
-        # }else{
           paste0("The predicted power of a ", balanced(), " SW-CRT with J=", J_use(), " periods, n = ", n_use(), " clusters, and m = ", m(), " participants per cluster-period is:") 
-        #}
       
         }else{
           paste0("For a SW-CRT to obtain at least ", power()*100,"% power with J=", J_use(), " periods and m = ", m(), " participants per cluster-period, the study would need:")
