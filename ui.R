@@ -188,7 +188,16 @@ shinyUI(fluidPage(
       #              max=1,
       #              value=0,
       #              step=0.01),
-      tags$u(h3("Type I error & degrees of freedom")),
+      conditionalPanel(
+        condition = "input.n_power == 'power'",
+        tags$u(h3("Type I error & degrees of freedom"))
+      ),
+      
+      conditionalPanel(
+        condition = "input.n_power == 'n'",
+        tags$u(h3("Type I error"))
+      ),
+      
       # sig level #
       numericInput(inputId="sig",
                    label="Significance level",
