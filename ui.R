@@ -35,7 +35,7 @@ shinyUI(fluidPage(
                               ')),
   
   # Application title
-  titlePanel("Power calculation for stepped-wedge cluster randomized trials with time-to-event endpoints"),
+  titlePanel("Power calculation for cross-sectional stepped-wedge cluster randomized trials with time-to-event endpoints"),
   
   sidebarLayout(
     sidebarPanel(
@@ -63,6 +63,7 @@ shinyUI(fluidPage(
           helpText("The file must be a comma separated .csv file consisting of 0s (control) and 1s (treatment), with a column for each time period and a row for each cluster. There may not be any missing cluster-periods. Do not include row or column names.", style="margin-top:-1em; margin-bottom:1em;")
         ),
         
+        tags$u(h3("Design constraints")),
         conditionalPanel(
           condition = "input.balanced == 'balanced'",
           # clusters #
@@ -70,10 +71,15 @@ shinyUI(fluidPage(
                        "Number of clusters (n):",
                        min=2,
                        max=1000,
-                       value=2)
+                       value=2),
+          helpText("Total number of cluster to be randomized.", style="margin-top:-1em; margin-bottom:1em;"),
         ) #end balanced conditional
       ), #end power conditional
       
+      conditionalPanel(
+        condition = "input.n_power == 'n'",
+        tags$u(h3("Design constraints"))
+      ),
       # cluster size #
       numericInput("m",
                    "Cluster-period size (m):",
@@ -89,7 +95,8 @@ shinyUI(fluidPage(
                      "Number of time periods (J):",
                      min = 3,
                      max = 50,
-                     value = 3)
+                     value = 3),
+        helpText("The number of time periods will be 1 larger than the number of sequences or 'steps' clusters can be randomized to.", style="margin-top:-1em; margin-bottom:1em;"),
       ),
       
       conditionalPanel(
@@ -114,7 +121,9 @@ shinyUI(fluidPage(
       #              "Specify within- and between-period Kendall's tau or ICCs?",
       #              c("Kendall's tau" = "tau",
       #                "ICC" = "icc")),
+      
       # correlations #
+      tags$u(h3("Correlation structure")),
       # conditionalPanel(
       #   condition = "input.icc_tau == 'tau'",
       numericInput("tau_w",
@@ -129,6 +138,7 @@ shinyUI(fluidPage(
                    max=1,
                    value=0.1,
                    step=0.01),
+      helpText("Kendall's tau is a type of rank correlation. The within-period Kendall's tau specifies how related survival times within the same cluster and period are. The within-period Kendall's tau specifies how related survival times within the same cluster but in different periods are.", style="margin-top:-1em; margin-bottom:1em;"),
       # ),
       # icc #
       # conditionalPanel(
@@ -147,6 +157,7 @@ shinyUI(fluidPage(
       #                step=0.01)
       # ),
       
+      tags$u(h3("Censoring & event rate constraints")),
       # admin censoring #
       numericInput("admin_censor",
                    "Administrative censoring (proportion)",
@@ -177,6 +188,7 @@ shinyUI(fluidPage(
       #              max=1,
       #              value=0,
       #              step=0.01),
+      tags$u(h3("Type I error & degrees of freedom")),
       # sig level #
       numericInput(inputId="sig",
                    label="Significance level",
@@ -240,7 +252,7 @@ shinyUI(fluidPage(
       ),
       tabPanel("References and Resources", 
                h3("References and Resources"),
-               HTML("<p style = 'font-size:13pt;'>This application has been written by Mary M. Ryan (University of Wisconsin - Madison USA), Fan Li (Yale School of Public Health USA), and with input from Monica Taljaard (University of Ottawa - Ottawa Hospital Research Institute CA). Please email <a href='mailto:mary.ryan@wisc.edu'>mary.ryan@wisc.edu</a> if you need to report errors or would like to submit comments or feedback.</p>"),
+               HTML("<p style = 'font-size:13pt;'>This application has been written by Mary Ryan Baumann (University of Wisconsin - Madison USA), Fan Li (Yale School of Public Health USA), and with input from Monica Taljaard (University of Ottawa - Ottawa Hospital Research Institute CA). Please email <a href='mailto:mary.ryan@wisc.edu'>mary.ryan@wisc.edu</a> if you need to report errors or would like to submit comments or feedback.</p>"),
                p("The code repository for this application can be found at: ", tags$a(href="https://github.com/maryryan/survivalSWCRT", "https://github.com/maryryan/survivalSWCRT"), style = "font-size:13pt;")
       )
         
