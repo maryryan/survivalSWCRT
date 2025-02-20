@@ -72,7 +72,7 @@ shinyUI(fluidPage(
                        min=2,
                        max=1000,
                        value=2),
-          helpText("Total number of cluster to be randomized.", style="margin-top:-1em; margin-bottom:1em;"),
+          helpText("Total number of clusters to be randomized.", style="margin-top:-1em; margin-bottom:1em;"),
         ) #end balanced conditional
       ), #end power conditional
       
@@ -253,7 +253,8 @@ shinyUI(fluidPage(
       tabPanel("References and Resources", 
                h3("References and Resources"),
                HTML("<p style = 'font-size:13pt;'>This application has been written by Mary Ryan Baumann (University of Wisconsin - Madison USA), Fan Li (Yale School of Public Health USA), and with input from Monica Taljaard (University of Ottawa - Ottawa Hospital Research Institute CA). Please email <a href='mailto:mary.ryan@wisc.edu'>mary.ryan@wisc.edu</a> if you need to report errors or would like to submit comments or feedback.</p>"),
-               p("The code repository for this application can be found at: ", tags$a(href="https://github.com/maryryan/survivalSWCRT", "https://github.com/maryryan/survivalSWCRT"), style = "font-size:13pt;")
+               p("The code repository for this application can be found at: ", tags$a(href="https://github.com/maryryan/survivalSWCRT", "https://github.com/maryryan/survivalSWCRT"), style = "font-size:13pt;"),
+               p("A preprint detailing the methods this application uses can be found at: ", tags$a(href="https://doi.org/10.48550/arXiv.2312.13097", "https://doi.org/10.48550/arXiv.2312.13097"), style = "font-size:13pt;")
       )
         
     )#end tablesetPanel
