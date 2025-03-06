@@ -253,7 +253,7 @@ for(s in seq(nrow(simulation_scenarios))){
                            matrix(score_test_power,nrow=1))
   
   
-  print(paste0(Sys.time(), ": Done with beta=", betaA[[1]][s],", J=",J,", n=", n, ", m=", m[[1]][s]))
+  print(paste0(Sys.time(), ": Done with beta=", betaA,", J=",J,", n=", n, ", m=", m))
   
   
 }
