@@ -41,6 +41,9 @@ lambda0_base <- lambdaDET(Cp, pa)
 # number of simulation iterations #
 nrep <- 2000
 
+sim_results_null <- matrix(NA, nrow=nrow(simulation_scenarios), ncol=40)
+sim_results_alt <- matrix(NA, nrow=nrow(simulation_scenarios), ncol=44)
+
 # begin simulations #
 for(s in seq(nrow(simulation_scenarios))){
   
@@ -157,7 +160,7 @@ for(s in seq(nrow(simulation_scenarios))){
     return(mean(reject))
   })
   
-  sim_results_null <- cbind(n,m,J,tau_w,tau_b,beta0,
+  sim_results_null[s,] <- cbind(n,m,J,tau_w,tau_b,beta0,
                             mean(empirical_var0[,1]),
                             naive0, ASE0, ESE0,
                             design_var0$var_naive, design_var0$var_beta_sqrt,
@@ -237,7 +240,7 @@ for(s in seq(nrow(simulation_scenarios))){
     
   })
   
-  sim_results_alt <- cbind(n,m,J,tau_w,tau_b, betaA,
+  sim_results_alt[s,] <- cbind(n,m,J,tau_w,tau_b, betaA,
                            mean(empirical_varA[,1]),
                            naiveA, ASEA, ESEA,
                            design_varA$var_naive, design_varA$var_beta_sqrt,
@@ -297,7 +300,7 @@ colnames(sim_results_alt) <- c("n", "m", "periods", "tau_w", "tau_b","betaA","em
 
 #### RESULTS ####
 # type I error plot #
-sim_null_results %>% 
+sim_results_null %>% 
   as.data.frame() %>% 
   janitor::clean_names() %>%
   dplyr::select(c("n","m","periods", "tau_w", "tau_b",
@@ -356,7 +359,7 @@ m_unique <- sort(unique(score_alt_results$m))
 score_wald_alt_plot_diff <- vector(mode="list", length=length(m_unique))
 
 for(i in seq(length(m_unique))){
-  score_wald_alt_plot_diff[[i]] <- sim_alt_results %>% 
+  score_wald_alt_plot_diff[[i]] <- sim_results_alt %>% 
     as.data.frame() %>% 
     janitor::clean_names() %>% 
     dplyr::select(c("n","m","periods", "tau_w", "tau_b","beta_a",
