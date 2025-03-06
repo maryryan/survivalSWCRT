@@ -37,7 +37,6 @@ baseline_constant <- 0.2
 
 # calculate base baseline hazard that results in above administrative censoring rate #
 lambda0_base <- lambdaDET(Cp, pa)
-lambda0 <- lambda0_base+baseline_constant*seq(0,(J-1))
 
 # number of simulation iterations #
 nrep <- 2000
@@ -46,12 +45,15 @@ nrep <- 2000
 for(s in seq(nrow(simulation_scenarios))){
   
   # pull simulation parameters #
-  J <- simulation_scenarios[s,"J"]
+  J <- simulation_scenarios[s,"periods"]
   n <- simulation_scenarios[s,"n"]
   m <- simulation_scenarios[s,"m"]
   betaA <- simulation_scenarios[s,"betaA"]
   tau_w <- simulation_scenarios[s,"tau_w"]
   tau_b <- simulation_scenarios[s,"tau_b"]
+  
+  # calculate period-specific baseline hazards #
+  lambda0 <- lambda0_base+baseline_constant*seq(0,(J-1))
   
   # set timing of intervention crossover for each cluster #
   k <- rep( seq(2,J), (simulation_scenarios[[1]][s]/(J-1)) )
