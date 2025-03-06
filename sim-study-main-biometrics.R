@@ -245,7 +245,7 @@ for(s in seq(nrow(simulation_scenarios))){
                            ASE_biasA, ESE_biasA,
                            BC0_biasA, BC_MD_biasA, BC_KC_biasA, BC_FG_biasA,
                            matrix(apply(testStat_resultsA,2,mean),nrow=1),
-                           design_power_t,design_power_t_n2,#design_power_score,
+                           design_power_t,#design_power_t_n2,#design_power_score,
                            matrix(z_test_power,nrow=1), matrix(t_test_power,nrow=1),
                            design_power_score_tang_B,design_power_score_SM_B,
                            design_power_score_mod,
