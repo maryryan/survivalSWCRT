@@ -720,7 +720,7 @@ shinyServer(function(input, output,session) {
       sequences <- periods-1
       
       if( clusters %% sequences != 0 ){
-        stop("Must have equal number of clusters per sequence for design to be balanaced")
+        stop("Must have equal number of clusters per sequence for design to be balanaced. Enter a number of clusters that is divisible by the number of sequences (J-1), or upload a custom design via the 'Unbalanced' option.")
       }else{
         
         W0 <- matrix(0, ncol=periods, nrow=sequences)
