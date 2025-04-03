@@ -65,10 +65,15 @@ design_varA_score <- sandwich_var_score(m=m,J=J, lambda0=lambda0,tau=Cp, pi_b=pi
 n_SM <- ( design_varA_score$B * (z_typeI + z_power) )^2/abs(design_varA_score$score)^2
 n_Tang <- ( design_varA_score$B * (z_power + z_typeI*(design_var0_score$B/design_varA_score$B)) )^2/abs(design_varA_score$score)^2
 
-#### CATHTAG SENSITIVITY ANALYSIS: n=18, beta=0.4, increasing hazard (Section 5 - Figure 4) #### 
+# print predicted number of clusters needed for 80% power under the 3 testing paradigms #
+ceiling(n_wald)
+ceiling(n_SM)
+ceiling(n_Tang)
+
+#### CATHTAG SENSITIVITY ANALYSIS: n=20, beta=0.4, increasing hazard (Section 5 - Figure 4) #### 
 ## Step 1: set design parameters ##
 m <- 35 # cluster size
-n <- 18 # number of clusters
+n <- 20 # number of clusters
 J <- 6 # number of time periods
 tau_w <- as.numeric(tau_scenarios[,1]) # within-period Kendall's tau
 tau_b <- as.numeric(tau_scenarios[,2]) # between-period Kendall's tau
@@ -160,10 +165,10 @@ sensitivity_results %>%
   theme_minimal()+
   theme(strip.background =element_rect(fill="lightgray"))
 
-#### CATHTAG SENSITIVITY ANALYSIS: n=24, beta=0.4, constant hazard (Appendix F - Figure F.1) #### 
+#### CATHTAG SENSITIVITY ANALYSIS: n=20, beta=0.4, constant hazard (Appendix F - Figure F.1) #### 
 ## Step 1: set design parameters ##
 m <- 35 # cluster size
-n <- 24 # number of clusters
+n <- 20 # number of clusters
 J <- 6 # number of time periods
 tau_w <- as.numeric(tau_scenarios[,1]) # within-period Kendall's tau
 tau_b <- as.numeric(tai_scenarios[,2]) # between-period Kendall's tau
@@ -214,6 +219,9 @@ for(j in seq(length(tau_w))){
   
   ## Step 3.3: store results ##
   sensitivity_results <- cbind(n, m, J, baseline_constant, tau_w[j], tau_b[j], tau_b[j]/tau_w[j], design_power_t, score_power_predict_A, score_power_predict_tang)
+  
+  # progress message #
+  print(paste(j, " out of ", length(tau_w), " scenarios done"))
 }
 
 colnames(sensitivity_results) <- c("n","m","J","baseline_constant","tau_w", "tau_b", "tau_ratio", "T", "S&M Score", "Tang Score")
@@ -247,10 +255,10 @@ sensitivity_results %>%
 theme_minimal()+
   theme(strip.background =element_rect(fill="lightgray"))
   
-#### CATHTAG SENSITIVITY ANALYSIS: n=24, beta=0.4, decreasing hazard (Appendix F - Figure F.3) #### 
+#### CATHTAG SENSITIVITY ANALYSIS: n=20, beta=0.4, decreasing hazard (Appendix F - Figure F.3) #### 
 ## Step 1: set design parameters ##
 m <- 35 # cluster size
-n <- 24 # number of clusters
+n <- 20 # number of clusters
 J <- 6 # number of time periods 
 tau_w <- as.numeric(tau_scenarios[,1]) # within-period Kendall's tau
 tau_b <- as.numeric(tai_scenarios[,2]) # between-period Kendall's tau
@@ -301,6 +309,9 @@ for(j in seq(length(tau_w))){
   
   ## Step 3.3: store results ##
   sensitivity_results <- cbind(n, m, J, baseline_constant, tau_w[j], tau_b[j], tau_b[j]/tau_w[j], design_power_t, score_power_predict_A, score_power_predict_tang)
+  
+  # progress message #
+  print(paste(j, " out of ", length(tau_w), " scenarios done"))
 }
 
 colnames(sensitivity_results) <- c("n","m","J","baseline_constant","tau_w", "tau_b", "tau_ratio", "T", "S&M Score", "Tang Score")
