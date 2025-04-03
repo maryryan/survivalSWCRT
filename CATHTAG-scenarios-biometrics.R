@@ -126,7 +126,7 @@ for(j in seq(length(tau_w))){
   sensitivity_results <- rbind(sensitivity_results, sensitivity_results_temp)
   
   # progress message #
-  print(j, " out of ", length(tau_w), " scenarios done")
+  print(paste(j, " out of ", length(tau_w), " scenarios done"))
 }
 
 colnames(sensitivity_results) <- c("n","m","J","baseline_constant","tau_w", "tau_b", "tau_ratio", "T", "S&M Score", "Tang Score")
