@@ -11,9 +11,10 @@ tau_scenarios <- read.table("catheter-scenarios.txt", sep=",")
 #### LOAD FUNCTIONS ####
 source("functions-biometrics.R")
 
-#### SAMPLE SIZE CALCULATION: 80% power, beta=0.4, m=35 (Section 5) ####
+#### POWER ESTIMATION: n=20, beta=0.4, m=35 (Section 5) ####
 ## Step 1: set design parameters ##
 m <- 35 # cluster size
+n <- 20 # number of clusters
 J <- 6 # number of time periods
 tau_w <- 0.1 # within-period Kendall's tau
 tau_b <- 0.05 #between-period Kendall's tau
@@ -43,32 +44,29 @@ lambda0 <- lambda0_base+baseline_constant*seq(0,(J-1)) # final baseline hazard
 # calculate probability of a cluster being on treatment #
 pi_b <- c(0, rep((1/(J-1)), (J-1)))
 
-# set type I error and power #
-alpha <- 0.05
-power <- 0.8
-
-z_typeI <- qnorm(1-alpha/2)
-z_power <- qnorm(power)
-
-## Step 3: Estimate variances and calculate sample size #
+## Step 3: estimate power ##
+## Step 3.1: power for Wald t-test ##
 # estimate wald variance under the alternative #
 design_varA <- sandwich_var(m=m,J=J, lambda0=lambda0,tau=Cp, pi_b=pi_b, tau_kw=tau_w, tau_kb=tau_b, beta=betaA)
 
-# calculate number of clusters needed for wald test #
-n_wald <- ( design_varA$var_beta_sqrt * (z_typeI + z_power) )^2/betaA^2
+# calculate predicted power based on your sandwich variance and t test #
+power_predict_wald_t <- pt((abs(betaA)/(design_varA$var_beta_sqrt/sqrt(n)) - qt(0.975, n-2)), n-2)
 
+## Step 3.2: power for score tests ##
 # estimate score variances under null and alternative hypotheses #
 design_var0_score <- sandwich_var_score(m=m,J=J, lambda0=lambda0,tau=Cp, pi_b=pi_b, tau_kw=tau_w, tau_kb=tau_b, beta0=beta0, betaA=beta0)
 design_varA_score <- sandwich_var_score(m=m,J=J, lambda0=lambda0,tau=Cp, pi_b=pi_b, tau_kw=tau_w, tau_kb=tau_b, beta0=beta0,betaA=betaA)
 
-# calculate number of clusters needed for Self & Mauritsen and Tang score tests #
-n_SM <- ( design_varA_score$B * (z_typeI + z_power) )^2/abs(design_varA_score$score)^2
-n_Tang <- ( design_varA_score$B * (z_power + z_typeI*(design_var0_score$B/design_varA_score$B)) )^2/abs(design_varA_score$score)^2
+# calculate predicted power based on S&M score test #
+score_power_predict_SM <-  pnorm(abs(design_varA_score$score)/(design_varA_score$B/sqrt(n)) - qnorm(0.975))
+
+# calculate predicted power based on Tang score test #
+score_power_predict_tang <-  pnorm(abs(design_varA_score$score)/(design_varA_score$B/sqrt(n)) - qnorm(0.975)*(design_var0_score$B/design_varA_score$B))
 
 # print predicted number of clusters needed for 80% power under the 3 testing paradigms #
-ceiling(n_wald)
-ceiling(n_SM)
-ceiling(n_Tang)
+power_predict_wald_t
+score_power_predict_SM
+score_power_predict_tang
 
 #### CATHTAG SENSITIVITY ANALYSIS: n=20, beta=0.4, increasing hazard (Section 5 - Figure 4) #### 
 ## Step 1: set design parameters ##
@@ -114,7 +112,7 @@ for(j in seq(length(tau_w))){
   design_varA <- sandwich_var(m=m,J=J, lambda0=lambda0,tau=Cp, pi_b=pi_b, tau_kw=tau_w[j], tau_kb=tau_b[j], beta=betaA)
   
   # calculate predicted power based on your sandwich variance and t test #
-  design_power_t <- pt((abs(betaA)/(design_varA$var_beta_sqrt/sqrt(n)) - qt(0.975, n-1)), n-1)
+  design_power_t <- pt((abs(betaA)/(design_varA$var_beta_sqrt/sqrt(n)) - qt(0.975, n-2)), n-2)
   
   ## Step 3.2: power for score tests ##
   # estimate score variances under null and alternative hypotheses #
@@ -165,7 +163,7 @@ sensitivity_results %>%
   theme_minimal()+
   theme(strip.background =element_rect(fill="lightgray"))
 
-#### CATHTAG SENSITIVITY ANALYSIS: n=20, beta=0.4, constant hazard (Appendix F - Figure F.1) #### 
+#### CATHTAG SENSITIVITY ANALYSIS: n=20, beta=0.4, constant hazard (Appendix F - Figure F.2) #### 
 ## Step 1: set design parameters ##
 m <- 35 # cluster size
 n <- 20 # number of clusters
@@ -205,7 +203,7 @@ for(j in seq(length(tau_w))){
   design_varA <- sandwich_var(m=m,J=J, lambda0=lambda0,tau=Cp, pi_b=pi_b, tau_kw=tau_w[j], tau_kb=tau_b[j], beta=betaA)
   
   # calculate predicted power based on your sandwich variance and t test #
-  design_power_t <- pt((abs(betaA)/(design_varA$var_beta_sqrt/sqrt(n)) - qt(0.975, n-1)), n-1)
+  design_power_t <- pt((abs(betaA)/(design_varA$var_beta_sqrt/sqrt(n)) - qt(0.975, n-2)), n-2)
   
   ## Step 3.2: power for score tests ##
   # estimate score variances under null and alternative hypotheses #
@@ -295,7 +293,7 @@ for(j in seq(length(tau_w))){
   design_varA <- sandwich_var(m=m,J=J, lambda0=lambda0,tau=Cp, pi_b=pi_b, tau_kw=tau_w[j], tau_kb=tau_b[j], beta=betaA)
   
   # calculate predicted power based on your sandwich variance and t test #
-  design_power_t <- pt((abs(betaA)/(design_varA$var_beta_sqrt/sqrt(n)) - qt(0.975, n-1)), n-1)
+  design_power_t <- pt((abs(betaA)/(design_varA$var_beta_sqrt/sqrt(n)) - qt(0.975, n-2)), n-2)
   
   ## Step 3.2: power for score tests ##
   # estimate score variances under null and alternative hypotheses #
