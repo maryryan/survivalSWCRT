@@ -72,7 +72,7 @@ shinyUI(fluidPage(
                        min=2,
                        max=1000,
                        value=2),
-          helpText("Total number of clusters to be randomized.", style="margin-top:-1em; margin-bottom:1em;"),
+          helpText("Total number of clusters to be randomized. For balanced designs, n should be a multiple of number of sequences (J-1).", style="margin-top:-1em; margin-bottom:1em;"),
         ) #end balanced conditional
       ), #end power conditional
       
@@ -96,7 +96,14 @@ shinyUI(fluidPage(
                      min = 3,
                      max = 50,
                      value = 3),
-        helpText("The number of time periods will be 1 larger than the number of sequences or 'steps' clusters can be randomized to.", style="margin-top:-1em; margin-bottom:1em;"),
+        ),
+      conditionalPanel(
+        condition = "input.balanced == 'balanced' & input.n_power == 'power'",
+        helpText("The number of time periods will be 1 larger than the number of sequences or 'steps' clusters can be randomized to. For balanced designs, n should be a multiple of number of sequences (J-1).", style="margin-top:-1em; margin-bottom:1em;")
+      ),
+      conditionalPanel(
+        condition = "input.balanced == 'unbalanced' | input.n_power == 'n'",
+        helpText("The number of time periods will be 1 larger than the number of sequences or 'steps' clusters can be randomized to.", style="margin-top:-1em; margin-bottom:1em;")
       ),
       
       conditionalPanel(
