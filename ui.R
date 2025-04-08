@@ -216,7 +216,8 @@ shinyUI(fluidPage(
         radioButtons("DoF",
                      "Degrees of Freedom:",
                      c("(n-1)"="n1",
-                       "(n-2)"="n2")
+                       "(n-2)"="n2"),
+                     selected = "n2"
                      )
       ),
 
